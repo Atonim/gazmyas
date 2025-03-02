@@ -1,0 +1,2 @@
+Monitor
+unset GTK_PATH
