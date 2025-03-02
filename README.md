@@ -1,2 +1,6 @@
 Monitor
-unset GTK_PATH
+    unset GTK_PATH
+    rcssmonitor
+
+Server
+    rcssserver
