@@ -60,6 +60,9 @@ class Agent {
 		if (cmd === 'see') {
 			this.envirenmentAnalizer.analyzeVisibleInformation(p)
 		}
+		if (this.run) {
+			this.act = { n: 'turn', v: 20 }
+		}
 		//if (this.team === 'Losers') return
 		//const mgr = Object.create(Manager).init(cmd, p, this.team, this.x, this.y)
 		

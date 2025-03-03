@@ -11,8 +11,10 @@ class EnvirenmentAnalyzer {
     }
 
     analyzeVisibleInformation (information) {
+        this.visibleFlags = []
         information = this.__parseTimeFromInformation(information)
         this.__parseVisibleFlagsFromInformation(information)
+        // console.log(this.visibleFlags)
         this.__calculatePlayerPosition()
 
     }
@@ -38,7 +40,7 @@ class EnvirenmentAnalyzer {
         }
     }
     __calculatePlayerPosition () {
-        CalcPos.calculatePosition(this.visibleFlags)
+        console.log(CalcPos.calculatePosition(this.visibleFlags))
     }
 }
 
