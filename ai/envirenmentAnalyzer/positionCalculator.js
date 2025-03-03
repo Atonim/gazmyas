@@ -40,7 +40,7 @@ class PositionCalculation {
         const X = alpha1 * (delta_beta / delta_alpha) + beta1
         const Y = delta_beta / delta_alpha
         console.log([X, Y])
-
+        return [X, Y]
     }
 }
 

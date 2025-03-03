@@ -1,7 +1,6 @@
 const Msg = require('./msg')
 const readline = require('readline')
-const Flags = require('./flags')
-const CalcPos = require('./positionCalculator')
+const EnvirenmentAnalizer = require('./envirenmentAnalyzer/envirenmentAnalyzer')
 //const Manager = require('./manager')
 //const { DT } = require('./decisionTree')
 
@@ -27,6 +26,7 @@ class Agent {
 				if ('s' == input) this.act = { n: 'kick', v: 100 }
 			}
 		})
+		this.envirenmentAnalizer = new EnvirenmentAnalizer()
 	}
   msgGot(msg) {
 		// Получение сообщения
@@ -57,36 +57,8 @@ class Agent {
 		//this.dt = Object.create(DT[this.role]).init()
 	}
 	analyzeEnv(msg, cmd, p) {
-		// console.log(`msg\n`, msg)
-		// console.log(`cmd\n`, cmd)
-		// console.log(`p\n`, p)
-
 		if (cmd === 'see') {
-			// console.log(`msg\n`, msg)
-			// console.log(`cmd\n`, p[1].cmd.p)
-			// console.log(`p\n`, p)
-
-			if (p.length > 0) {
-				let time = p[0]
-				p.splice(0, 1)
-			}
-
-			let visible_flags = []
-
-			for (const visible_object of p) {
-				let visible_object_name = visible_object.cmd.p.join('')
-				// Object.keys(Flags).indexOf(visible_object_name)
-
-				if (Flags[visible_object_name]) {
-					const fX = Flags[visible_object_name].x
-					const fY = Flags[visible_object_name].y
-					const flag = [fX, fY].concat(visible_object.p)
-					visible_flags.push(flag)
-				}
-			}
-			console.log(visible_flags)
-			CalcPos.calculatePosition(visible_flags)
-
+			this.envirenmentAnalizer.analyzeVisibleInformation(p)
 		}
 		//if (this.team === 'Losers') return
 		//const mgr = Object.create(Manager).init(cmd, p, this.team, this.x, this.y)
