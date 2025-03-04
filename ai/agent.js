@@ -1,5 +1,6 @@
 const Msg = require('./msg')
 const readline = require('readline')
+const EnvirenmentAnalizer = require('./envirenmentAnalyzer/envirenmentAnalyzer')
 //const Manager = require('./manager')
 //const { DT } = require('./decisionTree')
 
@@ -25,6 +26,7 @@ class Agent {
 				if ('s' == input) this.act = { n: 'kick', v: 100 }
 			}
 		})
+		this.envirenmentAnalizer = new EnvirenmentAnalizer()
 	}
   msgGot(msg) {
 		// Получение сообщения
@@ -54,7 +56,13 @@ class Agent {
 		if (p[1]) this.id = p[1] // id игрока
 		//this.dt = Object.create(DT[this.role]).init()
 	}
-  analyzeEnv(msg, cmd, p) {
+	analyzeEnv(msg, cmd, p) {
+		if (cmd === 'see') {
+			this.envirenmentAnalizer.analyzeVisibleInformation(p)
+		}
+		if (this.run) {
+			this.act = { n: 'turn', v: 20 }
+		}
 		//if (this.team === 'Losers') return
 		//const mgr = Object.create(Manager).init(cmd, p, this.team, this.x, this.y)
 		

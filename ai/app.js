@@ -1,11 +1,11 @@
 const Agent = require('./agent')
-//const Socket = require('./socket')
+const Socket = require('./socket')
 const VERSION = 7
 //const INPUT = false
 //const readline = require('readline')
 
-const teamName = 'Gazmyas'
-//const teamNameB = 'Losers'
+const teamNameLeft = 'Gazmyas'
+const teamNameRight = 'Combine'
 
 //async function getUserInput(prompt) {
 //	const rl = readline.createInterface({
@@ -32,9 +32,12 @@ const teamName = 'Gazmyas'
 //		[c1, c2, s] = [[-20, -5], [5, 10], 20]
 //	}
 
-  let agent = new Agent()
-  require('./socket')(agent, teamName, VERSION) //Настройка сокета
-  agent.socketSend("move", `-15 0`) // Размещен
+
+//   let agent = new Agent()
+//   require('./socket')(agent, teamName, VERSION) //Настройка сокета
+//   agent.socketSend("move", `-15 0`) // Размещен
+
+
 	//let pA1 = new Agent(teamNameA, 'player')
 	//let pB1 = new Agent(teamNameB, 'goalkeeper')
   //await Socket(pA1, pA1.team, VERSION)
@@ -43,3 +46,19 @@ const teamName = 'Gazmyas'
 	//await pA1.socketSend('move', `${c1[0]} ${c1[1]}`)
 	//await pB1.socketSend('move', `${-c2[0]} ${-c2[1]}`)
 //})()
+tL = setTeamLeft()
+tR = setTeamRight()
+tL[0].socketSend("move", `-15 0`)
+tR[0].socketSend("move", `-15 0`)
+function setTeamLeft() {
+	let team = []
+	team.push(new Agent())
+	Socket(team[0], teamNameLeft, VERSION)
+	return team
+}
+function setTeamRight() {
+	let team = []
+	team.push(new Agent())
+	Socket(team[0], teamNameRight, VERSION)
+	return team
+}
