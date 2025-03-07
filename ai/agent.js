@@ -5,7 +5,7 @@ const EnvirenmentAnalizer = require('./envirenmentAnalyzer/envirenmentAnalyzer')
 //const { DT } = require('./decisionTree')
 
 class Agent {
-	constructor() {
+	constructor(teamName) {
 		this.position = 'l' // По умолчанию ~ левая половина поля
 		this.run = false // Игра начата
 		this.act = null // Действия
@@ -26,7 +26,8 @@ class Agent {
 				if ('s' == input) this.act = { n: 'kick', v: 100 }
 			}
 		})
-		this.envirenmentAnalizer = new EnvirenmentAnalizer()
+		this.envirenmentAnalizer = new EnvirenmentAnalizer(teamName)
+		this.team = teamName
 	}
   msgGot(msg) {
 		// Получение сообщения
@@ -58,7 +59,8 @@ class Agent {
 	}
 	analyzeEnv(msg, cmd, p) {
 		if (cmd === 'see') {
-			this.envirenmentAnalizer.analyzeVisibleInformation(p)
+			this.envirenmentAnalizer.analyzeVisibleInformation(p, this.position)
+			console.log(`I'AM PLAYER ON POSITION: { x:${this.envirenmentAnalizer.x}, y:${this.envirenmentAnalizer.y} }`)
 		}
 		if (this.run) {
 			this.act = { n: 'turn', v: 20 }

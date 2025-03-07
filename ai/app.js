@@ -49,16 +49,16 @@ const teamNameRight = 'Combine'
 tL = setTeamLeft()
 tR = setTeamRight()
 tL[0].socketSend("move", `-15 0`)
-tR[0].socketSend("move", `-15 0`)
+tR[0].socketSend("move", `-10 10`)
 function setTeamLeft() {
 	let team = []
-	team.push(new Agent())
+	team.push(new Agent(teamNameLeft))
 	Socket(team[0], teamNameLeft, VERSION)
 	return team
 }
 function setTeamRight() {
 	let team = []
-	team.push(new Agent())
+	team.push(new Agent(teamNameRight))
 	Socket(team[0], teamNameRight, VERSION)
 	return team
 }
