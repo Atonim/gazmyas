@@ -1,1 +1,8 @@
-Ya mogu pisatt
+rcssserver:
+```rcssserver```
+
+rcssmonitor:
+```unset GTK_PATH```
+```rcssmonitor```
+
+

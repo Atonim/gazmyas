@@ -5,7 +5,7 @@ const EnvirenmentAnalizer = require('./envirenmentAnalyzer/envirenmentAnalyzer')
 //const { DT } = require('./decisionTree')
 
 class Agent {
-	constructor(teamName) {
+	constructor(teamName, number, rotatespeed = 20) {
 		this.position = 'l' // По умолчанию ~ левая половина поля
 		this.run = false // Игра начата
 		this.act = null // Действия
@@ -26,8 +26,10 @@ class Agent {
 				if ('s' == input) this.act = { n: 'kick', v: 100 }
 			}
 		})
+		this.rotatespeed = rotatespeed
 		this.envirenmentAnalizer = new EnvirenmentAnalizer(teamName)
 		this.team = teamName
+		this.number = number
 	}
   msgGot(msg) {
 		// Получение сообщения
@@ -60,11 +62,13 @@ class Agent {
 	analyzeEnv(msg, cmd, p) {
 		if (cmd === 'see') {
 			this.envirenmentAnalizer.analyzeVisibleInformation(p, this.position)
-			console.log(`I'AM PLAYER ON POSITION: { x:${this.envirenmentAnalizer.x}, y:${this.envirenmentAnalizer.y} }`)
+			// console.log(`I'AM PLAYER ON POSITION: { x:${Math.round(this.envirenmentAnalizer.x)}, y:${Math.round(this.envirenmentAnalizer.y)} }`)
 		}
 		if (this.run) {
-			this.act = { n: 'turn', v: 20 }
+			this.act = { n: 'turn', v: this.rotatespeed }
 		}
+		// if ()
+		console.log(this.printInfo())
 		//if (this.team === 'Losers') return
 		//const mgr = Object.create(Manager).init(cmd, p, this.team, this.x, this.y)
 		
@@ -94,6 +98,20 @@ class Agent {
       
 			this.act = null // Сброс команды
 		}
+	}
+
+	printInfo() {
+		let report = `(Team ${this.team} player №${this.number}): My position (x: ${Math.round(this.envirenmentAnalizer.x)}, y: ${Math.round(this.envirenmentAnalizer.y)}). I see:`
+		// console.log(this.envirenmentAnalizer.opponents)
+		if (this.envirenmentAnalizer.opponents) {
+			for (let playerPos of this.envirenmentAnalizer.opponents) {
+				// console.log(`(Team ${this.team} player №${this.number}):\t\t${playerNumber}, ${Math.round(playerPos.x)}`)
+				report += `\n(Team ${this.team} player №${this.number}):\t\tOpponent - position (x: ${Math.round(playerPos.x)}, y: ${Math.round(playerPos.y)})`
+			}
+		} else {
+			report += ` Nothing`
+		}
+		return report
 	}
 }
 

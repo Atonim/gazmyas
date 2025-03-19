@@ -9,12 +9,12 @@ class EnvirenmentAnalyzer {
         this.x = Infinity
         this.y = Infinity
         this.visibleFlags = []
-        this.teammates = {}
-        this.opponents = {}
+        this.teammates = []
+        this.opponents = []
     }
 
     analyzeVisibleInformation (information, side) {
-        this.opponents = {}
+        this.opponents = []
         this.visibleFlags = []
         information = this.__parseTimeFrom(information)
         this.__parseVisible(information)
@@ -55,9 +55,10 @@ class EnvirenmentAnalyzer {
             const playerLocation = visibleObject.p
             const playerPosition = CalcPos.calculateObjectPosition(this.visibleFlags, [this.x, this.y], playerLocation)
             if (playerTeam !== this.team) {
-                this.opponents[playerNumero] = {x: playerPosition[0], y: playerPosition[1]}
-                console.log(`OPPONENT PLAYER TEAM: ${playerTeam}, POSITION: ${playerPosition}`)
+                this.opponents.push({x: playerPosition[0], y: playerPosition[1]})
+                // console.log(`OPPONENT PLAYER TEAM: ${playerTeam}, POSITION: ${playerPosition}`)
             }
+            // console.log(this.opponents)
         }
     }
     __calculateAgentPosition (side) {
