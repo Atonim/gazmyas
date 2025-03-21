@@ -7,7 +7,6 @@ class PositionCalculator {
             const [x1, y1, d1, a1] = flags[0]            
             return this.solveBy1(x1, y1, d1, a1)
         }
-        // console.log(points)
 
         const [x1, y1, d1, a1] = this.parseFlag(points[0])
         let i = 1, j = 2
@@ -29,10 +28,7 @@ class PositionCalculator {
         }
         const [x2, y2, d2, a2] = points[i]
         const [x3, y3, d3, a3] = points[j]
-
-        // const [x2, y2, d2, a2] = this.parseFlag(flags[1])
-        // const [x3, y3, d3, a3] = this.parseFlag(flags[2])
-        // console.log(x1, y1, d1, x2, y2, d2, x3, y3, d3)
+        
         return this.solveBy3(x1, y1, d1, x2, y2, d2, x3, y3, d3)
     }
 
@@ -75,7 +71,7 @@ class PositionCalculator {
              + d3 * d3 
              - 2 * d2 * d3 * Math.cos(Math.abs(a2 - a3) * (Math.PI / 180))
         )
-        // console.log(x1, y1, da1, x2, y2, d2, x3, y3, da3)
+        
         return this.solveBy3(x1, y1, da1, x2, y2, d2, x3, y3, da3)
     }
 
@@ -104,7 +100,6 @@ class PositionCalculator {
 	}
 
     static solveBy1 (x1, y1, d1, a1) {
-        // console.log(x1, y1, a1, d1 * Math.cos(a1 * Math.PI / 180), d1 * Math.sin(a1 * Math.PI / 180))
         console.log(`Bad visual information. Calculating position by 1 flag`)
         const x = x1 + d1 * Math.sin(a1 * Math.PI / 180)
         const y = y1 - d1 * Math.cos(a1 * Math.PI / 180)
