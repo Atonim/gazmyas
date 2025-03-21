@@ -32,9 +32,7 @@ class EnvirenmentAnalyzer {
         this.visibleFlags = []
         information = this.__parseTimeFrom(information)
         this.__parseVisible(information)
-
-        // this.__parseVisibleFlagsFrom(information)
-        // // console.log(this.visibleFlags)
+        
         this.__calculateAgentPosition()
     }
 
@@ -48,7 +46,6 @@ class EnvirenmentAnalyzer {
     __parseVisible (information) {
         for (const visibleObject of information) {
             let visibleObjectName = visibleObject.cmd.p.join('')
-            // let objectInformation = {}
 
             this.__parseFlagFrom(visibleObject, visibleObjectName)
             this.__parsePlayerFrom(visibleObject, visibleObjectName)
@@ -76,9 +73,7 @@ class EnvirenmentAnalyzer {
             )
             if (playerTeam !== this.team) {
                 this.opponents.push({x: playerPosition[0], y: playerPosition[1]})
-                // console.log(`OPPONENT PLAYER TEAM: ${playerTeam}, POSITION: ${playerPosition}`)
             }
-            // console.log(this.opponents)
         }
     }
     __calculateAgentPosition () {
