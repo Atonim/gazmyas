@@ -2,45 +2,89 @@ const Flags = require('./flags')
 const CalcPos = require('./positionCalculator')
 
 class EnvirenmentAnalyzer {
-    constructor() {
+    constructor(team, side = 'l') {
 
         this.time = 0
-        this.x = 0
-        this.y = 0
+        this.team = team
+        this.fieldSide = side
+        this.x = Infinity
+        this.y = Infinity
         this.visibleFlags = []
+        this.teammates = []
+        this.opponents = []
+    }
+    getPlayerCoords () {
+        let [x, y] = [this.x, this.y]
+        if (this.fieldSide === 'r') {
+            return [-x, -y]
+        }
+        return [x, y]
+    }
+    changeCoordsBySide (coords) {
+        if (this.fieldSide === 'r') {
+            return [-coords[0], -coords[1]]
+        }
+        return [coords[0], coords[1]]
     }
 
     analyzeVisibleInformation (information) {
+        this.opponents = []
         this.visibleFlags = []
-        information = this.__parseTimeFromInformation(information)
-        this.__parseVisibleFlagsFromInformation(information)
-        // console.log(this.visibleFlags)
-        this.__calculatePlayerPosition()
+        information = this.__parseTimeFrom(information)
+        this.__parseVisible(information)
 
+        // this.__parseVisibleFlagsFrom(information)
+        // // console.log(this.visibleFlags)
+        this.__calculateAgentPosition()
     }
 
-    __parseTimeFromInformation (information) {
+    __parseTimeFrom (information) {
         if (information.length > 0) {
             this.time = information[0]
             information.splice(0, 1)
         }
         return information
     }
-    __parseVisibleFlagsFromInformation (information) {
-        for (const visible_object of information) {
-            let visible_object_name = visible_object.cmd.p.join('')
-            // Object.keys(Flags).indexOf(visible_object_name)
+    __parseVisible (information) {
+        for (const visibleObject of information) {
+            let visibleObjectName = visibleObject.cmd.p.join('')
+            // let objectInformation = {}
 
-            if (Flags[visible_object_name]) {
-                const fX = Flags[visible_object_name].x
-                const fY = Flags[visible_object_name].y
-                const flag = [fX, fY].concat(visible_object.p)
-                this.visibleFlags.push(flag)
-            }
+            this.__parseFlagFrom(visibleObject, visibleObjectName)
+            this.__parsePlayerFrom(visibleObject, visibleObjectName)
         }
     }
-    __calculatePlayerPosition () {
-        console.log(CalcPos.calculatePosition(this.visibleFlags))
+    __parseFlagFrom (visibleObject, visibleObjectName) {
+        if (Flags[visibleObjectName]) {
+            const fX = Flags[visibleObjectName].x
+            const fY = Flags[visibleObjectName].y
+            const flag = [fX, fY].concat(visibleObject.p.slice(0, 2))
+            this.visibleFlags.push(flag)
+        }
+    }
+    __parsePlayerFrom (visibleObject, visibleObjectName) {
+        if (visibleObjectName.startsWith('p')) {
+            const playerTeam = visibleObject.cmd.p[1]
+            const playerNumero = visibleObject.cmd.p[2]
+            const playerLocation = visibleObject.p
+            const playerPosition = this.changeCoordsBySide(
+                CalcPos.calculateObjectPosition(
+                    this.visibleFlags, 
+                    this.getPlayerCoords(), 
+                    playerLocation
+                )
+            )
+            if (playerTeam !== this.team) {
+                this.opponents.push({x: playerPosition[0], y: playerPosition[1]})
+                // console.log(`OPPONENT PLAYER TEAM: ${playerTeam}, POSITION: ${playerPosition}`)
+            }
+            // console.log(this.opponents)
+        }
+    }
+    __calculateAgentPosition () {
+        [this.x, this.y] = this.changeCoordsBySide(
+            CalcPos.calculatePlayerPosition(this.visibleFlags)
+        )
     }
 }
 

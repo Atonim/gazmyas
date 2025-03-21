@@ -1,114 +1,119 @@
-
-class PositionCalculation {
-    static calculatePosition (flags) {
-        flags = this.sortFlagsByDistance(flags)
-        let coords = []
-        if (flags[0][0] === flags[1][0]) {
-            coords = this.calculatePositionSameAbscissAlgorithm(flags)
-        } else if (flags[0][1] === flags[1][1] && flags[1][1] === flags[2][1]) {
-            // coords = this.calculatePositionSameOrdinateAlgorithm(flags)
-        } else {
-            coords = this.calculatePositionThreePointsAlgorithm(flags)
+class PositionCalculator {
+    static calculatePlayerPosition(flags) {
+        let points = flags.sort((a, b) => a[2] - b[2])
+        if (points.length === 0) {
+            return [NaN, NaN]
+        } else if (points.length < 3) {
+            const [x1, y1, d1, a1] = flags[0]            
+            return this.solveBy1(x1, y1, d1, a1)
         }
-        // console.log(`Coords: (${coords})`)
-        return coords
+        // console.log(points)
+
+        const [x1, y1, d1, a1] = this.parseFlag(points[0])
+        let i = 1, j = 2
+        while (points[i][0] === x1 || points[i][1] === y1) {
+            i += 1
+            if (i >= points.length) {
+                i = 1
+                console.log(`calculatePlayerPosition i is overflowed`)
+                return this.solveBy1(x1, y1, d1, a1)
+            }
+        }
+        while (points[j][0] === x1 || points[j][1] === y1 || i === j) {
+            j += 1
+            if (j >= points.length) {
+                j = 2
+                console.log(`calculatePlayerPosition j is overflowed`)
+                return this.solveBy1(x1, y1, d1, a1)
+            }
+        }
+        const [x2, y2, d2, a2] = points[i]
+        const [x3, y3, d3, a3] = points[j]
+
+        // const [x2, y2, d2, a2] = this.parseFlag(flags[1])
+        // const [x3, y3, d3, a3] = this.parseFlag(flags[2])
+        // console.log(x1, y1, d1, x2, y2, d2, x3, y3, d3)
+        return this.solveBy3(x1, y1, d1, x2, y2, d2, x3, y3, d3)
     }
 
-    static calculatePositionThreePointsAlgorithm (flags) {
-
-        if (flags.length < 3) 
-            throw new Error(`Слишком мало флагов (${flags.length}). Нельзя вычислить позицию методом calculatePositionThreePointsAlgorithm`)
-
-        const x1 = flags[0][0]
-        const y1 = flags[0][1]
-        const d1 = flags[0][2]
-
-        const x2 = flags[1][0]
-        const y2 = flags[1][1]
-        const d2 = flags[1][2]
-
-        const x3 = flags[2][0]
-        const y3 = flags[2][1]
-        const d3 = flags[2][2]
-        // console.log(x1, x2, x3, y1, y2, y3, d1, d2, d3)
+    static calculateObjectPosition(flags, playerCoords, objectInfo) {
+        let points = flags.sort((a, b) => a[2] - b[2])
+        if (points.length === 0) {
+            return [NaN, NaN]
+        } else if (points.length < 3) {
+            const [x2, y2] = playerCoords, [d2, a2] = objectInfo            
+            return this.solveBy1(x2, y2, d2, a2)
+        }
         
-        let alpha1 = (y1 - y2) / (x2 - x1)
-        let beta1 =
-            (y2 * y2 - y1 * y1 + x2 * x2 - x1 * x1 + d1 * d1 - d2 * d2) /
-            (2 * (x2 - x1))
-        let alpha2 = (y1 - y3) / (x3 - x1)
-        let beta2 =
-            (y3 * y3 - y1 * y1 + x3 * x3 - x1 * x1 + d1 * d1 - d3 * d3) /
-            (2 * (x3 - x1))
-        let delta_beta = beta1 - beta2
-        let delta_alpha = alpha2 - alpha1
-        let X = alpha1 * (delta_beta / delta_alpha) + beta1
-        let Y = delta_beta / delta_alpha
-        console.log(alpha1, alpha2)
-        console.log(beta1, beta2)
-        // console.log([X, Y])
-        return [X, Y]
+        const [x2, y2] = playerCoords, [d2, a2] = objectInfo
+        let i = 0, j = 1
+        while (points[i][0] === x2 || points[i][1] === y2) {
+            i += 1
+            if (i >= points.length) {
+                i = 0
+                console.log(`calculateObjectPosition i is overflowed`)
+                return this.solveBy1(x2, y2, d2, a2)
+            }
+        }
+        while (points[j][0] === x2 || points[j][1] === points[i][1] || i === j) {
+            j += 1
+            if (j >= points.length) {
+                j = 1
+                console.log(`calculateObjectPosition j is overflowed`)
+                return this.solveBy1(x2, y2, d2, a2)
+            }
+        }
+        const [x1, y1, d1, a1] = points[i]
+        const [x3, y3, d3, a3] = points[j]
+        const da1 = Math.sqrt(
+            d2 * d2 
+             + d1 * d1 
+             - 2 * d2 * d1 * Math.cos(Math.abs(a2 - a1) * (Math.PI / 180))
+        )
+        const da3 = Math.sqrt(
+            d2 * d2 
+             + d3 * d3 
+             - 2 * d2 * d3 * Math.cos(Math.abs(a2 - a3) * (Math.PI / 180))
+        )
+        // console.log(x1, y1, da1, x2, y2, d2, x3, y3, da3)
+        return this.solveBy3(x1, y1, da1, x2, y2, d2, x3, y3, da3)
     }
 
-    static calculatePositionSameAbscissAlgorithm (flags) {
-        if (flags.length < 3) 
-            throw new Error(`Слишком мало флагов (${flags.length}). Нельзя вычислить позицию методом calculatePositionThreePointsAlgorithm`)
-
-        const x1 = flags[0][0]
-        const y1 = flags[0][1]
-        const d1 = flags[0][2]
-
-        const x2 = flags[1][0]
-        const y2 = flags[1][1]
-        const d2 = flags[1][2]
-
-        const x3 = flags[2][0]
-        const y3 = flags[2][1]
-        const d3 = flags[2][2]
-
-        let Y = (y2 * y2 - y1 * y1 + d1 * d1 - d2 * d2) / (2 * (y2 - y1))
-        let X1 = x1 - Math.sqrt(d1 * d1 - (Y - y1) * (Y - y1))
-        let X2 = x1 + Math.sqrt(d1 * d1 - (Y - y1) * (Y - y1))
-        let X = [X1, X2].sort((a, b) => 
-            ((a - x3) * (a - x3) - (Y - y3) * (Y - y3) - d3 * d3) - ((b - x3) * (b - x3) - (Y - y3) * (Y - y3) - d3 * d3)
-            )[1]
-        return [X, Y]
+    static parseFlag (flag) {
+        let x = flag[0]
+        let y = flag[1]
+        let d = flag[2]
+        let a = flag[3]
+        return [x, y, d, a]
     }
 
-    static calculatePositionSameOrdinateAlgorithm (flags) {
-        if (flags.length < 3) 
-            throw new Error(`Слишком мало флагов (${flags.length}). Нельзя вычислить позицию методом calculatePositionThreePointsAlgorithm`)
+    static solveBy3 (x1, y1, d1, x2, y2, d2, x3, y3, d3) {
+		const alpha1 = (y1 - y2) / (x2 - x1)
+		const beta1 =
+			(y2 * y2 - y1 * y1 + x2 * x2 - x1 * x1 + d1 * d1 - d2 * d2) /
+			(2 * (x2 - x1))
+		const alpha2 = (y1 - y3) / (x3 - x1)
+		const beta2 =
+			(y3 * y3 - y1 * y1 + x3 * x3 - x1 * x1 + d1 * d1 - d3 * d3) /
+			(2 * (x3 - x1))
+		const delta_beta = beta1 - beta2
+		const delta_alpha = alpha2 - alpha1
+		const X = alpha1 * (delta_beta / delta_alpha) + beta1
+		const Y = delta_beta / delta_alpha
+		return [X, Y]
+	}
 
-        const x1 = flags[0][0]
-        const y1 = flags[0][1]
-        const d1 = flags[0][2]
-
-        const x2 = flags[1][0]
-        const y2 = flags[1][1]
-        const d2 = flags[1][2]
-
-        const x3 = flags[2][0]
-        const y3 = flags[2][1]
-        const d3 = flags[2][2]
-
-        let X = (x2 * x2 - x1 * x1 + d1 * d1 - d2 * d2) / (2 * (x2 - x1))
-        let Y1 = y1 - Math.sqrt(d1 * d1 - (X - x1) * (X - x1))
-        let Y2 = y1 + Math.sqrt(d1 * d1 - (X - x1) * (X - x1))
-        let Y = [Y1, Y2].sort((a, b) => 
-            ((X - x3) * (X - x3) - (a - y3) * (a - y3) - d3 * d3) - ((X - x3) * (X - x3) - (b - y3) * (b - y3) - d3 * d3)
-            )[1]
-        return [X, Y]
+    static solveBy1 (x1, y1, d1, a1) {
+        // console.log(x1, y1, a1, d1 * Math.cos(a1 * Math.PI / 180), d1 * Math.sin(a1 * Math.PI / 180))
+        console.log(`Bad visual information. Calculating position by 1 flag`)
+        const x = x1 + d1 * Math.sin(a1 * Math.PI / 180)
+        const y = y1 - d1 * Math.cos(a1 * Math.PI / 180)
+        return [x, y]
     }
 
-    static sortFlagsByDistance (flags) {
-        flags.sort((a, b) => a[3] - b[3])
-        // flags.sort((a, b) => {
-        //     if (a[0] < b[0]) return -1
-        //     if (a[0] > b[0]) return 1
-        //     return 0
-        // })
-        return flags
+    static check() {
+        console.log("Connected")
     }
 }
 
-module.exports = PositionCalculation // Экспорт
+module.exports = PositionCalculator
