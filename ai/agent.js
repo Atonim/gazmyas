@@ -100,7 +100,7 @@ class Agent {
 	searchFlag (flagName) {
 		let flagIndex = this.envirenmentAnalizer.visibleFlags.findIndex((elem) => elem[4] === flagName)
 		if (flagIndex === -1) {
-			this.act = { n: 'turn', v: 40 }
+			this.act = { n: 'turn', v: 20 }
 		}
 	}
 	turnToFlag (flagName) {
@@ -116,7 +116,13 @@ class Agent {
 			const target = this.envirenmentAnalizer.visibleFlags[flagIndex]
 			const aTarget = target[3]
 			const dTarget = target[2]
-			if (dTarget > 3 && Math.abs(aTarget) < 5) {
+			if (dTarget > 70) {
+				this.act = { n: 'dash', v: 70 }
+			} else if (dTarget > 40 && Math.abs(aTarget) < 30) {
+				this.act = { n: 'dash', v: 70 }
+			} else if (dTarget > 20 && Math.abs(aTarget) < 20) {
+				this.act = { n: 'dash', v: 100 }
+			} else if (dTarget > 3 && Math.abs(aTarget) < 5) {
 				this.act = { n: 'dash', v: 100 }
 			} else if (dTarget < 3) {
 				this.goNextAction()
@@ -126,7 +132,7 @@ class Agent {
 	searchBall () {
 		const isBallFound = this.envirenmentAnalizer.isBallSeen
 		if (!isBallFound) {
-			this.act = { n: 'turn', v: 40 }
+			this.act = { n: 'turn', v: 20 }
 		}
 	}
 	moveToBall () {
@@ -136,11 +142,23 @@ class Agent {
 			const gateIdx = this.envirenmentAnalizer.visibleFlags.findIndex((elem) => elem[4] === gate)
 			const aBall = this.envirenmentAnalizer.ballCoords.a
 			const dBall = this.envirenmentAnalizer.ballCoords.d
-			if (Math.abs(aBall) > 5) {
+			if (dBall > 70) {
+				this.act = { n: 'dash', v: 70 }
+			} else if (Math.abs(aBall) > 20) {
 				this.act = { n: 'turn', v: aBall }
 			} else if (dBall > 0.5) {
 				this.act = { n: 'dash', v: 100 }
-			} else if (gateIdx !== -1) {}
+			} else if (gateIdx !== -1) {
+				this.act = { n: 'kick', v: `10 20` }
+			} else {
+				const aGate = this.envirenmentAnalizer.visibleFlags[gateIdx][3]
+				const dGate = this.envirenmentAnalizer.visibleFlags[gateIdx][2]
+				if (dGate > 25) {
+					this.act = { n: 'kick', v: `10 ${aGate}` }
+				} else {
+					this.sct = { n: 'kick', v: `100 ${aGate}` }
+				}
+			}
 		}
 	}
 	goNextAction () {

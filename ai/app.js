@@ -29,9 +29,9 @@ try {
 	rotate_speed = 30
 }
 tL = setTeamLeft()
-// tR = setTeamRight()
+tR = setTeamRight()
 tL[0].socketSend("move", `${x1} ${y1}`)
-// tR[0].socketSend("move", `${x2} ${y2}`)
+tR[0].socketSend("move", `${x2} ${y2}`)
 function setTeamLeft() {
 	let team = []
 	team.push(new Agent(teamNameLeft, 1))
