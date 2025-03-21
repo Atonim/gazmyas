@@ -2,18 +2,32 @@ const Flags = require('./flags')
 const CalcPos = require('./positionCalculator')
 
 class EnvirenmentAnalyzer {
-    constructor(team) {
+    constructor(team, side = 'l') {
 
         this.time = 0
         this.team = team
+        this.fieldSide = side
         this.x = Infinity
         this.y = Infinity
         this.visibleFlags = []
         this.teammates = []
         this.opponents = []
     }
+    getPlayerCoords () {
+        let [x, y] = [this.x, this.y]
+        if (this.fieldSide === 'r') {
+            return [-x, -y]
+        }
+        return [x, y]
+    }
+    changeCoordsBySide (coords) {
+        if (this.fieldSide === 'r') {
+            return [-coords[0], -coords[1]]
+        }
+        return [coords[0], coords[1]]
+    }
 
-    analyzeVisibleInformation (information, side) {
+    analyzeVisibleInformation (information) {
         this.opponents = []
         this.visibleFlags = []
         information = this.__parseTimeFrom(information)
@@ -21,7 +35,7 @@ class EnvirenmentAnalyzer {
 
         // this.__parseVisibleFlagsFrom(information)
         // // console.log(this.visibleFlags)
-        this.__calculateAgentPosition(side)
+        this.__calculateAgentPosition()
     }
 
     __parseTimeFrom (information) {
@@ -53,7 +67,13 @@ class EnvirenmentAnalyzer {
             const playerTeam = visibleObject.cmd.p[1]
             const playerNumero = visibleObject.cmd.p[2]
             const playerLocation = visibleObject.p
-            const playerPosition = CalcPos.calculateObjectPosition(this.visibleFlags, [this.x, this.y], playerLocation)
+            const playerPosition = this.changeCoordsBySide(
+                CalcPos.calculateObjectPosition(
+                    this.visibleFlags, 
+                    this.getPlayerCoords(), 
+                    playerLocation
+                )
+            )
             if (playerTeam !== this.team) {
                 this.opponents.push({x: playerPosition[0], y: playerPosition[1]})
                 // console.log(`OPPONENT PLAYER TEAM: ${playerTeam}, POSITION: ${playerPosition}`)
@@ -61,11 +81,10 @@ class EnvirenmentAnalyzer {
             // console.log(this.opponents)
         }
     }
-    __calculateAgentPosition (side) {
-        [this.x, this.y] = CalcPos.calculatePosition(this.visibleFlags)
-        if (side === 'r') {
-            [this.x, this.y] = [-this.x, -this.y]
-        }
+    __calculateAgentPosition () {
+        [this.x, this.y] = this.changeCoordsBySide(
+            CalcPos.calculatePlayerPosition(this.visibleFlags)
+        )
     }
 }
 

@@ -3,6 +3,8 @@ const readline = require('readline')
 const EnvirenmentAnalizer = require('./envirenmentAnalyzer/envirenmentAnalyzer')
 //const Manager = require('./manager')
 //const { DT } = require('./decisionTree')
+const SIGNS_AFTER_COMA = 2
+const round = (number) => Math.round(number * 10 * SIGNS_AFTER_COMA) / (10 * SIGNS_AFTER_COMA)
 
 class Agent {
 	constructor(teamName, number, rotatespeed = 20) {
@@ -27,7 +29,7 @@ class Agent {
 			}
 		})
 		this.rotatespeed = rotatespeed
-		this.envirenmentAnalizer = new EnvirenmentAnalizer(teamName)
+		this.envirenmentAnalizer = new EnvirenmentAnalizer(teamName, this.position)
 		this.team = teamName
 		this.number = number
 	}
@@ -55,19 +57,25 @@ class Agent {
 		this.analyzeEnv(data.msg, data.cmd, data.p) // Обработка
 	}
 	initAgent(p) {
-		if (p[0] == 'r') this.position = 'r' // Правая половина поля
+		if (p[0] == 'r') {
+			this.position = 'r' // Правая половина поля
+			this.envirenmentAnalizer.fieldSide = 'r'
+		}
 		if (p[1]) this.id = p[1] // id игрока
 		//this.dt = Object.create(DT[this.role]).init()
 	}
 	analyzeEnv(msg, cmd, p) {
 		if (cmd === 'see') {
 			this.envirenmentAnalizer.analyzeVisibleInformation(p, this.position)
-			// console.log(`I'AM PLAYER ON POSITION: { x:${Math.round(this.envirenmentAnalizer.x)}, y:${Math.round(this.envirenmentAnalizer.y)} }`)
+			// console.log(`I'AM PLAYER ON POSITION: { x:${round(this.envirenmentAnalizer.x)}, y:${round(this.envirenmentAnalizer.y)} }`)
 		}
 		if (this.run) {
 			this.act = { n: 'turn', v: this.rotatespeed }
+			if (this.envirenmentAnalizer.x > 0 || this.envirenmentAnalizer.y > 0) {
+				console.log(this.printInfo())
+				throw new Error()
+			}
 		}
-		// if ()
 		console.log(this.printInfo())
 		//if (this.team === 'Losers') return
 		//const mgr = Object.create(Manager).init(cmd, p, this.team, this.x, this.y)
@@ -101,12 +109,12 @@ class Agent {
 	}
 
 	printInfo() {
-		let report = `(Team ${this.team} player №${this.number}): My position (x: ${Math.round(this.envirenmentAnalizer.x)}, y: ${Math.round(this.envirenmentAnalizer.y)}). I see:`
+		let report = `(Team ${this.team} player №${this.number}): My position (x: ${round(this.envirenmentAnalizer.x)}, y: ${round(this.envirenmentAnalizer.y)}), side: ${this.envirenmentAnalizer.fieldSide}. I see:`
 		// console.log(this.envirenmentAnalizer.opponents)
-		if (this.envirenmentAnalizer.opponents) {
+		if (!!this.envirenmentAnalizer.opponents.length) {
 			for (let playerPos of this.envirenmentAnalizer.opponents) {
-				// console.log(`(Team ${this.team} player №${this.number}):\t\t${playerNumber}, ${Math.round(playerPos.x)}`)
-				report += `\n(Team ${this.team} player №${this.number}):\t\tOpponent - position (x: ${Math.round(playerPos.x)}, y: ${Math.round(playerPos.y)})`
+				// console.log(`(Team ${this.team} player №${this.number}):\t\t${playerNumber}, ${round(playerPos.x)}`)
+				report += `\n(Team ${this.team} player №${this.number}):\t\tOpponent - position (x: ${round(playerPos.x)}, y: ${round(playerPos.y)})`
 			}
 		} else {
 			report += ` Nothing`
