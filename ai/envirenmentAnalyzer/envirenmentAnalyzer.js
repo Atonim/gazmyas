@@ -9,9 +9,13 @@ class EnvirenmentAnalyzer {
         this.fieldSide = side
         this.x = Infinity
         this.y = Infinity
+
         this.visibleFlags = []
         this.teammates = []
         this.opponents = []
+
+        this.isBallSeen = false
+        this.ballCoords = {x: NaN, y: NaN, d: NaN, a: NaN}
     }
     getPlayerCoords () {
         let [x, y] = [this.x, this.y]
@@ -49,13 +53,14 @@ class EnvirenmentAnalyzer {
 
             this.__parseFlagFrom(visibleObject, visibleObjectName)
             this.__parsePlayerFrom(visibleObject, visibleObjectName)
+            this.__parseBallInfo(visibleObject, visibleObjectName)
         }
     }
     __parseFlagFrom (visibleObject, visibleObjectName) {
         if (Flags[visibleObjectName]) {
             const fX = Flags[visibleObjectName].x
             const fY = Flags[visibleObjectName].y
-            const flag = [fX, fY].concat(visibleObject.p.slice(0, 2))
+            const flag = [fX, fY].concat(visibleObject.p.slice(0, 2)).concat([visibleObjectName])
             this.visibleFlags.push(flag)
         }
     }
@@ -76,6 +81,23 @@ class EnvirenmentAnalyzer {
             }
         }
     }
+    __parseBallInfo (visibleObject, visibleObjectName) {
+        if (visibleObjectName.startsWith('b')) {
+            this.ballCoords.d = visibleObject.p[0]
+            this.ballCoords.a = visibleObject.p[1]
+            this.isBallSeen = true
+            const [x, y] = this.changeCoordsBySide(
+                CalcPos.calculateObjectPosition(
+                    this.visibleFlags,
+                    this.getPlayerCoords(),
+                    visibleObject.p
+                )
+            )
+            this.ballCoords.x = x
+            this.ballCoords.y = y
+        }
+    }
+    
     __calculateAgentPosition () {
         [this.x, this.y] = this.changeCoordsBySide(
             CalcPos.calculatePlayerPosition(this.visibleFlags)
