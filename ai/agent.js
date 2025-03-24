@@ -63,7 +63,7 @@ class Agent {
     //console.log(data);
     if (!data) throw new Error("Parse error\n" + msg);
     // Первое (hear) — начало игры
-    if (data.cmd == "hear") this.run = true;
+    if (data.cmd == "hear" && data.p[2] == "play_on") this.run = true;
     if (data.cmd == "init") this.initAgent(data.p); //MHMnmaflM3auMH
     this.analyzeEnv(data.msg, data.cmd, data.p); // Обработка
   }
@@ -89,9 +89,7 @@ class Agent {
           this.searchFlag(actions[this.strategyIdx].fl);
           break;
         case "kick":
-          this.searchBall();
-          this.moveToBall();
-          // this.go
+          this.searchBall(actions[this.strategyIdx].goal);
           break;
       }
     }
@@ -155,34 +153,51 @@ class Agent {
   searchBall() {
     const isBallFound = this.envirenmentAnalizer.isBallSeen;
     if (!isBallFound) {
-      this.act = { n: "turn", v: 20 };
+      this.keepSearchig();
+    } else {
+      this.moveToBall();
     }
   }
   moveToBall() {
-    const isBallFound = this.envirenmentAnalizer.isBallSeen;
-    if (isBallFound) {
-      const gate = actions[this.strategyIdx].goal;
-      const gateIdx = this.envirenmentAnalizer.visibleFlags.findIndex(
-        (elem) => elem[4] === gate
-      );
-      const aBall = this.envirenmentAnalizer.ballCoords.a;
-      const dBall = this.envirenmentAnalizer.ballCoords.d;
-      if (dBall > 70) {
-        this.act = { n: "dash", v: 70 };
-      } else if (Math.abs(aBall) > 20) {
-        this.act = { n: "turn", v: aBall };
-      } else if (dBall > 0.5) {
-        this.act = { n: "dash", v: 100 };
-      } else if (gateIdx !== -1) {
-        this.act = { n: "kick", v: `10 20` };
+    const angle = this.envirenmentAnalizer.ballCoords.a;
+    const distance = this.envirenmentAnalizer.ballCoords.d;
+
+    console.log("ball distance ", distance, " ball angle ", angle);
+    if (distance < 0.5) {
+      this.kickTheBall();
+    } else if (Math.abs(angle) > 20) {
+      this.act = { n: "turn", v: angle };
+    } else if (distance <= 30) {
+      this.act = { n: "dash", v: 50 };
+    } else if (Math.abs(angle) <= 10 && distance > 70) {
+      this.act = { n: "dash", v: 100 };
+    } else if (Math.abs(angle) <= 10 && distance > 50) {
+      this.act = { n: "dash", v: 80 };
+    } else if (Math.abs(angle) <= 10 && distance > 30) {
+      this.act = { n: "dash", v: 60 };
+    } else if (Math.abs(angle) <= 20 && distance > 50) {
+      this.act = { n: "dash", v: 80 };
+    } else {
+      this.act = { n: "turn", v: angle };
+    }
+  }
+  kickTheBall() {
+    const gate = actions[this.strategyIdx].goal;
+    const gateIdx = this.envirenmentAnalizer.visibleFlags.findIndex(
+      (elem) => elem[4] === gate
+    );
+    if (gateIdx === -1) {
+      console.log("i kicked");
+      this.act = { n: "kick", v: `30 20` };
+    } else {
+      const angle = this.envirenmentAnalizer.visibleFlags[gateIdx][3];
+      const distance = this.envirenmentAnalizer.visibleFlags[gateIdx][2];
+      if (distance > 25) {
+        this.act = { n: "kick", v: `70 ${angle}` };
+        console.log("I KICKED THE BALL ");
       } else {
-        const aGate = this.envirenmentAnalizer.visibleFlags[gateIdx][3];
-        const dGate = this.envirenmentAnalizer.visibleFlags[gateIdx][2];
-        if (dGate > 25) {
-          this.act = { n: "kick", v: `10 ${aGate}` };
-        } else {
-          this.sct = { n: "kick", v: `100 ${aGate}` };
-        }
+        this.act = { n: "kick", v: `100 ${angle}` };
+        console.log("I KICKED THE BALLLLLLLLLLLl");
       }
     }
   }
@@ -197,9 +212,11 @@ class Agent {
     if (this.run) {
       // Игра начата
       if (this.act) {
-        if (this.act.n == "kick")
-          this.socketSend(this.act.n, this.act.v + " 0");
-        else this.socketSend(this.act.n, this.act.v);
+        if (this.act.n === "kick" && this.act.v.includes("100")) {
+          this.goNextAction();
+        }
+        console.log(this.act.n, this.act.v);
+        this.socketSend(this.act.n, this.act.v);
       }
 
       this.act = null; // Сброс команды
