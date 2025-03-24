@@ -1,6 +1,7 @@
 const Msg = require("./msg");
 const readline = require("readline");
 const EnvirenmentAnalizer = require("./envirenmentAnalyzer/envirenmentAnalyzer");
+const { DT } = require("./DT/dt");
 
 const SIGNS_AFTER_COMA = 2;
 const round = (number) =>
@@ -14,7 +15,13 @@ const actions = [
 ];
 
 class Agent {
-  constructor(teamName, number, rotatespeed = 20) {
+  constructor(
+    teamName,
+    number,
+    role = "player",
+    isLeader = false,
+    rotatespeed = 20
+  ) {
     this.position = "l"; // По умолчанию ~ левая половина поля
     this.run = false; // Игра начата
     this.act = null; // Действия
@@ -39,6 +46,8 @@ class Agent {
     this.envirenmentAnalizer = new EnvirenmentAnalizer(teamName, this.position);
     this.team = teamName;
     this.number = number;
+    this.role = role;
+    this.isLeader = isLeader;
     this.strategy = "flag";
     this.strategyIdx = 0;
   }
@@ -60,7 +69,7 @@ class Agent {
   processMsg(msg) {
     // Обработка сообщения
     let data = Msg.parseMsg(msg); // Разбор сообщения
-    //console.log(data);
+    console.log(data);
     if (!data) throw new Error("Parse error\n" + msg);
     // Первое (hear) — начало игры
     if (data.cmd == "hear" && data.p[2] == "play_on") this.run = true;
@@ -73,6 +82,7 @@ class Agent {
       this.envirenmentAnalizer.fieldSide = "r";
     }
     if (p[1]) this.id = p[1]; // id игрока
+    this.dt = Object.create(DT[this.role]).init();
   }
   analyzeEnv(msg, cmd, p) {
     if (cmd == "hear" && p[2].includes("goal")) {
@@ -83,15 +93,17 @@ class Agent {
     if (cmd === "see") {
       this.envirenmentAnalizer.analyzeVisibleInformation(p);
     }
+
     if (this.run) {
-      switch (this.strategy) {
-        case "flag":
-          this.searchFlag(actions[this.strategyIdx].fl);
-          break;
-        case "kick":
-          this.searchBall(actions[this.strategyIdx].goal);
-          break;
-      }
+      this.act = this.envirenmentAnalizer.getAction(this.dt);
+      //switch (this.strategy) {
+      //  case "flag":
+      //    this.searchFlag(actions[this.strategyIdx].fl);
+      //    break;
+      //  case "kick":
+      //    this.searchBall(actions[this.strategyIdx].goal);
+      //    break;
+      //}
     }
     console.log(this.printInfo());
   }

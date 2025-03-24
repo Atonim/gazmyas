@@ -1,119 +1,250 @@
-const FL = "flag",
-  KI = "kick",
-  CA = "catch";
+const FLAG = "flag";
+const KICK = "kick";
+const CATCH = "catch";
+const TURN = "turn";
+const DASH = "dash";
 
-const player = [{ act: KI, fl: "b", goal: "gr" }];
+const BALL = "b";
+const GOAL_RIGHT = "gr";
+const GOAL_LEFT = "gl";
+
+const FULL_SPEED = 100;
+const MID_SPEED = 80;
+const LOW_SPEED = 60;
+
+const FULL_POWER = 100;
+const MID_POWER = 70;
+const LOW_POWER = 40;
+
+const SEARCHING_ANGLE = 30;
+
+const BALL_DISTANCE = 0.5;
+const FLAG_DISTANCE = 3;
+
+const HIGH_BALL_ANGLE = 20;
+const LOW_BALL_ANGLE = 10;
+const HIGH_BALL_DISTANCE = 70;
+const MID_BALL_DISTANCE = 50;
+const LOW_BALL_DISTANCE = 30;
+
+const HIGH_FLAG_ANGLE = 20;
+const MID_FLAG_ANGLE = 10;
+const LOW_FLAG_ANGLE = 5;
+const HIGH_FLAG_DISTANCE = 70;
+const MID_FLAG_DISTANCE = 50;
+const LOW_FLAG_DISTANCE = 30;
+
+const player = [{ act: KICK, fl: BALL, goal: GOAL_RIGHT }];
 
 const goalkeeper = [
-  { act: FL, fl: "gr" },
-  { act: CA, fl: "b", goal: "gl" },
-  { act: KI, fl: "b", goal: "gl" },
+  { act: FLAG, fl: GOAL_RIGHT },
+  { act: CATCH, fl: BALL, goal: GOAL_LEFT },
+  { act: KICK, fl: BALL, goal: GOAL_LEFT },
 ];
 
 const DT = {
   player: {
     init() {
       this.state = {
-        next: 0,
-        addOneToNext() {
-          this.next = (this.next + 1) % this.sequence.length;
+        index: 0,
+        goNextAction() {
+          this.index = (this.index + 1) % this.actions.length;
         },
-        sequence: player,
+        actions: player,
         command: null,
       };
       return this;
     },
     root: {
-      exec(mgr, state) {
-        state.action = state.sequence[state.next];
+      exec(manager, state) {
+        state.action = state.actions[state.index];
         state.command = null;
       },
-      next: "goalVisible",
+      next: "isTargetVisible",
     },
-    goalVisible: {
-      condition: (mgr, state) => mgr.getVisible(state.action.fl),
-      trueCond: "rootNext",
+    isTargetVisible: {
+      condition: (manager, state) => manager.isVisible(state.action.fl),
+      trueCond: "isFlagSearching",
       falseCond: "rotate",
     },
     rotate: {
-      exec(mgr, state) {
-        state.command = { n: "turn", v: "90" };
+      exec(manager, state) {
+        state.command = { n: TURN, v: SEARCHING_ANGLE };
       },
       next: "sendCommand",
     },
-    rootNext: {
-      condition: (mgr, state) => state.action.act == FL,
-      trueCond: "flagSeek",
-      falseCond: "ballSeek",
+    isFlagSearching: {
+      condition: (manager, state) => state.action.act == FLAG,
+      trueCond: "isFlagClose",
+      falseCond: "isBallClose",
     },
-    flagSeek: {
-      condition: (mgr, state) => 3 > mgr.getDistance(state.action.fl),
-      trueCond: "closeFlag",
-      falseCond: "farGoal",
+    isFlagClose: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) < FLAG_DISTANCE,
+      trueCond: "nextAction",
+      falseCond: "isFlagAngleHigh",
     },
-    closeFlag: {
-      exec(mgr, state) {
-        state.next++;
-        state.action = state.sequence[state.next];
+    nextAction: {
+      exec(manager, state) {
+        state.index++;
+        state.action = state.actions[state.index];
       },
-      next: "goalVisible",
+      next: "isTargetVisible",
     },
-    farGoal: {
-      condition: (mgr, state) => mgr.getAngle(state.action.fl) > 4,
-      trueCond: "rotateToGoal",
-      falseCond: "runToGoal",
+    isFlagAngleHigh: {
+      condition: (manager, state) =>
+        Math.abs(manager.getAngle(state.action.fl)) > HIGH_FLAG_ANGLE,
+      trueCond: "rotateToTarget",
+      falseCond: "isFlagAngleLow",
     },
-    rotateToGoal: {
-      exec(mgr, state) {
-        state.command = { n: "turn", v: mgr.getAngle(state.action.fl) };
+    isFlagAngleLow: {
+      condition: (manager, state) =>
+        Math.abs(manager.getAngle(state.action.fl)) < LOW_FLAG_ANGLE,
+      trueCond: "rotateToTarget",
+      falseCond: "isFlagDistanceHighAndAngleMid",
+    },
+    isFlagDistanceHighAndAngleMid: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > HIGH_FLAG_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= MID_FLAG_ANGLE,
+      trueCond: "runFullSpeed",
+      falseCond: "isFlagDistanceMidAndAngleMid",
+    },
+    isFlagDistanceMidAndAngleMid: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > MID_FLAG_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= MID_FLAG_ANGLE,
+      trueCond: "runMidSpeed",
+      falseCond: "isFlagDistanceLowAndAngleMid",
+    },
+    isFlagDistanceLowAndAngleMid: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > LOW_FLAG_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= MID_FLAG_ANGLE,
+      trueCond: "runMidSpeed",
+      falseCond: "isFlagDistanceMidAndAngleBelowHigh",
+    },
+    isFlagDistanceMidAndAngleBelowHigh: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > MID_FLAG_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= HIGH_FLAG_ANGLE,
+      trueCond: "runMidSpeed",
+      falseCond: "rotateToTarget",
+    },
+    rotateToTarget: {
+      exec(manager, state) {
+        state.command = { n: TURN, v: manager.getAngle(state.action.fl) };
       },
       next: "sendCommand",
     },
-    runToGoal: {
-      exec(mgr, state) {
-        state.command = { n: "dash", v: 100 };
+    runFullSpeed: {
+      exec(manager, state) {
+        state.command = { n: DASH, v: FULL_SPEED };
+      },
+      next: "sendCommand",
+    },
+    runMidSpeed: {
+      exec(manager, state) {
+        state.command = { n: DASH, v: MID_SPEED };
+      },
+      next: "sendCommand",
+    },
+    runLowSpeed: {
+      exec(manager, state) {
+        state.command = { n: DASH, v: LOW_SPEED };
       },
       next: "sendCommand",
     },
     sendCommand: {
-      command: (mgr, state) => state.command,
+      command: (manager, state) => state.command,
     },
-    ballSeek: {
-      condition: (mgr, state) => 0.5 > mgr.getDistance(state.action.fl),
-      trueCond: "closeBall",
-      falseCond: "farGoal",
+    isBallClose: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) < BALL_DISTANCE,
+      trueCond: "isGoalVisible",
+      falseCond: "isBallAngleHigh",
     },
-    closeBall: {
-      condition: (mgr, state) => mgr.getVisible(state.action.goal),
-      trueCond: "ballGoalVisible",
-      falseCond: "ballGoalInvisible",
+    isBallAngleHigh: {
+      condition: (manager, state) =>
+        Math.abs(manager.getAngle(state.action.fl)) > HIGH_BALL_ANGLE,
+      trueCond: "rotateToTarget",
+      falseCond: "isBallDistanceLow",
     },
-    ballGoalVisible: {
-      exec(mgr, state) {
+    isBallDistanceLow: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) <= LOW_BALL_DISTANCE,
+      trueCond: "runLowSpeed",
+      falseCond: "isBallDistanceHighAndAngleLow",
+    },
+    isBallDistanceHighAndAngleLow: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > HIGH_BALL_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= LOW_BALL_ANGLE,
+      trueCond: "runFullSpeed",
+      falseCond: "isBallDistanceMidAndAngleLow",
+    },
+    isBallDistanceMidAndAngleLow: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > MID_BALL_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= LOW_BALL_ANGLE,
+      trueCond: "runMidSpeed",
+      falseCond: "isBallDistanceLowAndAngleLow",
+    },
+    isBallDistanceLowAndAngleLow: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > LOW_BALL_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= LOW_BALL_ANGLE,
+      trueCond: "runLowSpeed",
+      falseCond: "isBallDistanceMidAndAngleMid",
+    },
+    isBallDistanceMidAndAngleMid: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > MID_BALL_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= HIGH_BALL_ANGLE,
+      trueCond: "runMidSpeed",
+      falseCond: "rotateToTarget",
+    },
+    isGoalVisible: {
+      condition: (manager, state) => manager.isVisible(state.action.goal),
+      trueCond: "kickFullPower",
+      falseCond: "kickLowPower",
+    },
+    kickFullPower: {
+      exec(manager, state) {
         state.command = {
-          n: "kick",
-          v: `100 ${mgr.getAngle(state.action.goal)}`,
+          n: KICK,
+          v: `${FULL_POWER} ${manager.getAngle(state.action.goal)}`,
         };
       },
       next: "sendCommand",
     },
-    ballGoalInvisible: {
-      exec(mgr, state) {
-        state.command = { n: "kick", v: "10 90" };
+    kickMidPower: {
+      exec(manager, state) {
+        state.command = {
+          n: KICK,
+          v: `${MID_POWER} ${manager.getAngle(state.action.goal)}`,
+        };
+      },
+      next: "sendCommand",
+    },
+    kickLowPower: {
+      exec(manager, state) {
+        state.command = { n: KICK, v: `${LOW_POWER} ${SEARCHING_ANGLE}` };
       },
       next: "sendCommand",
     },
   },
+
   groupPlayer: {
     init() {
       this.state = {
-        next: 0,
+        index: 0,
 
-        increaseNext() {
-          this.next = (this.next + 1) % this.sequence.length;
+        goNextAction() {
+          this.index = (this.index + 1) % this.actions.length;
         },
 
-        sequence: player,
+        actions: player,
 
         command: null,
       };
@@ -122,8 +253,8 @@ const DT = {
     },
 
     root: {
-      exec(mgr, state) {
-        state.action = state.sequence[state.next];
+      exec(manager, state) {
+        state.action = state.actions[state.index];
 
         state.command = null;
       },
@@ -132,15 +263,187 @@ const DT = {
     },
 
     isLeader: {
-      condition: (mgr, state) => mgr.isLeader,
+      condition: (manager, state) => manager.isLeader,
 
-      trueCond: "goalVisible",
+      trueCond: "isTargetVisible",
 
       falseCond: "leaderVisible",
     },
 
+    isTargetVisible: {
+      condition: (manager, state) => manager.isVisible(state.action.fl),
+      trueCond: "isFlagSearching",
+      falseCond: "rotate",
+    },
+    rotate: {
+      exec(manager, state) {
+        state.command = { n: TURN, v: SEARCHING_ANGLE };
+      },
+      next: "sendCommand",
+    },
+    isFlagSearching: {
+      condition: (manager, state) => state.action.act == FLAG,
+      trueCond: "isFlagClose",
+      falseCond: "isBallClose",
+    },
+    isFlagClose: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) < FLAG_DISTANCE,
+      trueCond: "nextAction",
+      falseCond: "isFlagAngleHigh",
+    },
+    nextAction: {
+      exec(manager, state) {
+        state.index++;
+        state.action = state.actions[state.index];
+      },
+      next: "isTargetVisible",
+    },
+    isFlagAngleHigh: {
+      condition: (manager, state) =>
+        Math.abs(manager.getAngle(state.action.fl)) > HIGH_FLAG_ANGLE,
+      trueCond: "rotateToTarget",
+      falseCond: "isFlagAngleLow",
+    },
+    isFlagAngleLow: {
+      condition: (manager, state) =>
+        Math.abs(manager.getAngle(state.action.fl)) < LOW_FLAG_ANGLE,
+      trueCond: "rotateToTarget",
+      falseCond: "isFlagDistanceHighAndAngleMid",
+    },
+    isFlagDistanceHighAndAngleMid: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > HIGH_FLAG_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= MID_FLAG_ANGLE,
+      trueCond: "runFullSpeed",
+      falseCond: "isFlagDistanceMidAndAngleMid",
+    },
+    isFlagDistanceMidAndAngleMid: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > MID_FLAG_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= MID_FLAG_ANGLE,
+      trueCond: "runMidSpeed",
+      falseCond: "isFlagDistanceLowAndAngleMid",
+    },
+    isFlagDistanceLowAndAngleMid: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > LOW_FLAG_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= MID_FLAG_ANGLE,
+      trueCond: "runMidSpeed",
+      falseCond: "isFlagDistanceMidAndAngleBelowHigh",
+    },
+    isFlagDistanceMidAndAngleBelowHigh: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > MID_FLAG_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= HIGH_FLAG_ANGLE,
+      trueCond: "runMidSpeed",
+      falseCond: "rotateToTarget",
+    },
+    rotateToTarget: {
+      exec(manager, state) {
+        state.command = { n: TURN, v: manager.getAngle(state.action.fl) };
+      },
+      next: "sendCommand",
+    },
+    runFullSpeed: {
+      exec(manager, state) {
+        state.command = { n: DASH, v: FULL_SPEED };
+      },
+      next: "sendCommand",
+    },
+    runMidSpeed: {
+      exec(manager, state) {
+        state.command = { n: DASH, v: MID_SPEED };
+      },
+      next: "sendCommand",
+    },
+    runLowSpeed: {
+      exec(manager, state) {
+        state.command = { n: DASH, v: LOW_SPEED };
+      },
+      next: "sendCommand",
+    },
+    sendCommand: {
+      command: (manager, state) => state.command,
+    },
+    isBallClose: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) < BALL_DISTANCE,
+      trueCond: "isGoalVisible",
+      falseCond: "isBallAngleHigh",
+    },
+    isBallAngleHigh: {
+      condition: (manager, state) =>
+        Math.abs(manager.getAngle(state.action.fl)) > HIGH_BALL_ANGLE,
+      trueCond: "rotateToTarget",
+      falseCond: "isBallDistanceLow",
+    },
+    isBallDistanceLow: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) <= LOW_BALL_DISTANCE,
+      trueCond: "runLowSpeed",
+      falseCond: "isBallDistanceHighAndAngleLow",
+    },
+    isBallDistanceHighAndAngleLow: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > HIGH_BALL_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= LOW_BALL_ANGLE,
+      trueCond: "runFullSpeed",
+      falseCond: "isBallDistanceMidAndAngleLow",
+    },
+    isBallDistanceMidAndAngleLow: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > MID_BALL_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= LOW_BALL_ANGLE,
+      trueCond: "runMidSpeed",
+      falseCond: "isBallDistanceLowAndAngleLow",
+    },
+    isBallDistanceLowAndAngleLow: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > LOW_BALL_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= LOW_BALL_ANGLE,
+      trueCond: "runLowSpeed",
+      falseCond: "isBallDistanceMidAndAngleMid",
+    },
+    isBallDistanceMidAndAngleMid: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > MID_BALL_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= HIGH_BALL_ANGLE,
+      trueCond: "runMidSpeed",
+      falseCond: "rotateToTarget",
+    },
+    isGoalVisible: {
+      condition: (manager, state) => manager.isVisible(state.action.goal),
+      trueCond: "kickFullPower",
+      falseCond: "kickLowPower",
+    },
+    kickFullPower: {
+      exec(manager, state) {
+        state.command = {
+          n: KICK,
+          v: `${FULL_POWER} ${manager.getAngle(state.action.goal)}`,
+        };
+      },
+      next: "sendCommand",
+    },
+    kickMidPower: {
+      exec(manager, state) {
+        state.command = {
+          n: KICK,
+          v: `${MID_POWER} ${manager.getAngle(state.action.goal)}`,
+        };
+      },
+      next: "sendCommand",
+    },
+    kickLowPower: {
+      exec(manager, state) {
+        state.command = { n: KICK, v: `${LOW_POWER} ${SEARCHING_ANGLE}` };
+      },
+      next: "sendCommand",
+    },
+
     leaderVisible: {
-      condition: (mgr, state) => mgr.teammates.length > 0,
+      condition: (manager, state) => manager.teammates.length > 0,
 
       trueCond: "closeToLeader",
 
@@ -148,9 +451,9 @@ const DT = {
     },
 
     closeToLeader: {
-      condition: (mgr, state) =>
-        mgr.teammates[0].cmd.p[0] <= 1 &&
-        Math.abs(mgr.teammates[0].cmd.p[1]) < 40,
+      condition: (manager, state) =>
+        manager.teammates[0].cmd.p[0] <= 1 &&
+        Math.abs(manager.teammates[0].cmd.p[1]) < 40,
 
       trueCond: "rotate30",
 
@@ -158,7 +461,7 @@ const DT = {
     },
 
     farToLeader: {
-      condition: (mgr, state) => mgr.teammates[0].cmd.p[0] > 10,
+      condition: (manager, state) => manager.teammates[0].cmd.p[0] > 10,
 
       trueCond: "goToLeader",
 
@@ -166,8 +469,9 @@ const DT = {
     },
 
     midDistToLeader: {
-      condition: (mgr, state) =>
-        mgr.teammates[0].cmd.p[1] > 40 || mgr.teammates[0].cmd.p[1] < 25,
+      condition: (manager, state) =>
+        manager.teammates[0].cmd.p[1] > 40 ||
+        manager.teammates[0].cmd.p[1] < 25,
 
       trueCond: "rotateMinus30",
 
@@ -175,7 +479,7 @@ const DT = {
     },
 
     midMidDistToLeader: {
-      condition: (mgr, state) => mgr.teammates[0].cmd.p[0] < 7,
+      condition: (manager, state) => manager.teammates[0].cmd.p[0] < 7,
 
       trueCond: "dash20",
 
@@ -183,7 +487,8 @@ const DT = {
     },
 
     goToLeader: {
-      condition: (mgr, state) => Math.abs(mgr.teammates[0].cmd.p[1]) > 5,
+      condition: (manager, state) =>
+        Math.abs(manager.teammates[0].cmd.p[1]) > 5,
 
       trueCond: "rotateToLeader",
 
@@ -191,15 +496,15 @@ const DT = {
     },
 
     rotateToLeader: {
-      exec(mgr, state) {
-        state.command = { n: "turn", v: mgr.teammates[0].cmd.p[1] };
+      exec(manager, state) {
+        state.command = { n: "turn", v: manager.teammates[0].cmd.p[1] };
       },
 
       next: "sendCommand",
     },
 
-    goalVisible: {
-      condition: (mgr, state) => mgr.getVisible(state.action.fl),
+    isTargetVisible: {
+      condition: (manager, state) => manager.isVisible(state.action.fl),
 
       trueCond: "rootNext",
 
@@ -207,7 +512,7 @@ const DT = {
     },
 
     rotate90: {
-      exec(mgr, state) {
+      exec(manager, state) {
         state.command = { n: "turn", v: "90" };
       },
 
@@ -215,7 +520,7 @@ const DT = {
     },
 
     rotate30: {
-      exec(mgr, state) {
+      exec(manager, state) {
         state.command = { n: "turn", v: "30" };
       },
 
@@ -223,7 +528,7 @@ const DT = {
     },
 
     rotateMinus30: {
-      exec(mgr, state) {
+      exec(manager, state) {
         state.command = { n: "turn", v: "-30" };
       },
 
@@ -231,15 +536,15 @@ const DT = {
     },
 
     rootNext: {
-      condition: (mgr, state) => state.action.act == FL,
+      condition: (manager, state) => state.action.act == FLAG,
 
       trueCond: "flagSeek",
 
-      falseCond: "ballSeek",
+      falseCond: "isBallClose",
     },
 
     flagSeek: {
-      condition: (mgr, state) => 3 > mgr.getDistance(state.action.fl),
+      condition: (manager, state) => 3 > manager.getDistance(state.action.fl),
 
       trueCond: "closeFlag",
 
@@ -247,17 +552,18 @@ const DT = {
     },
 
     closeFlag: {
-      exec(mgr, state) {
+      exec(manager, state) {
         state.increaseNext();
 
-        state.action = state.sequence[state.next];
+        state.action = state.actions[state.index];
       },
 
-      next: "goalVisible",
+      next: "isTargetVisible",
     },
 
     farGoal: {
-      condition: (mgr, state) => Math.abs(mgr.getAngle(state.action.fl)) > 4,
+      condition: (manager, state) =>
+        Math.abs(manager.getAngle(state.action.fl)) > 4,
 
       trueCond: "rotateToGoal",
 
@@ -265,15 +571,15 @@ const DT = {
     },
 
     rotateToGoal: {
-      exec(mgr, state) {
-        state.command = { n: "turn", v: mgr.getAngle(state.action.fl) };
+      exec(manager, state) {
+        state.command = { n: "turn", v: manager.getAngle(state.action.fl) };
       },
 
       next: "sendCommand",
     },
 
     runToGoal: {
-      exec(mgr, state) {
+      exec(manager, state) {
         state.command = { n: "dash", v: 100 };
       },
 
@@ -281,7 +587,7 @@ const DT = {
     },
 
     dash20: {
-      exec(mgr, state) {
+      exec(manager, state) {
         state.command = { n: "dash", v: 20 };
       },
 
@@ -289,7 +595,7 @@ const DT = {
     },
 
     dash40: {
-      exec(mgr, state) {
+      exec(manager, state) {
         state.command = { n: "dash", v: 40 };
       },
 
@@ -297,11 +603,11 @@ const DT = {
     },
 
     sendCommand: {
-      command: (mgr, state) => state.command,
+      command: (manager, state) => state.command,
     },
 
-    ballSeek: {
-      condition: (mgr, state) => 0.5 > mgr.getDistance(state.action.fl),
+    isBallClose: {
+      condition: (manager, state) => 0.5 > manager.getDistance(state.action.fl),
 
       trueCond: "closeBall",
 
@@ -309,15 +615,15 @@ const DT = {
     },
 
     closeBall: {
-      // exec(mgr, state) {
+      // exec(manager, state) {
 
-      // 	state.command = { n: 'kick', v: `100 ${mgr.getKickAngle(state.action.goal)}` };
+      // 	state.command = { n: 'kick', v: `100 ${manager.getKickAngle(state.action.goal)}` };
 
       // },
 
       // next: 'sendCommand',
 
-      condition: (mgr, state) => mgr.getVisible(state.action.goal),
+      condition: (manager, state) => manager.isVisible(state.action.goal),
 
       trueCond: "ballGoalVisible",
 
@@ -325,11 +631,11 @@ const DT = {
     },
 
     ballGoalVisible: {
-      exec(mgr, state) {
+      exec(manager, state) {
         state.command = {
           n: "kick",
 
-          v: `100 ${mgr.getAngle(state.action.goal)}`,
+          v: `100 ${manager.getAngle(state.action.goal)}`,
         };
       },
 
@@ -337,76 +643,155 @@ const DT = {
     },
 
     ballGoalInvisible: {
-      exec(mgr, state) {
+      exec(manager, state) {
         state.command = { n: "kick", v: "10 45" };
       },
 
       next: "sendCommand",
     },
   },
+
   goalkeeper: {
     init() {
       this.state = {
-        next: 0,
-        increaseNext() {
-          this.next = (this.next + 1) % this.sequence.length;
+        index: 0,
+        goNextAction() {
+          this.index = (this.index + 1) % this.actions.length;
         },
-        sequence: goalkeeper,
+        actions: goalkeeper,
         command: null,
       };
       return this;
     },
     root: {
-      exec(mgr, state) {
-        state.action = state.sequence[state.next];
+      exec(manager, state) {
+        state.action = state.actions[state.index];
         state.command = null;
       },
       next: "checkBall",
     },
     checkBall: {
-      condition: (mgr, state) =>
-        state.action.act === FL &&
-        mgr.inPenaltyZone() &&
-        mgr.getVisible("b") &&
-        3 > mgr.getDistance("b"),
+      condition: (manager, state) =>
+        state.action.act === FLAG &&
+        manager.isInPenaltyZone() &&
+        manager.isBallSeen &&
+        FLAG_DISTANCE > manager.ballCoords.d,
       trueCond: "switchToBall",
-      falseCond: "goalVisible",
+      falseCond: "isTargetVisible",
     },
     switchToBall: {
-      exec(mgr, state) {
-        state.next = state.sequence.length - 1;
-        state.action = state.sequence[state.next];
+      exec(manager, state) {
+        state.index = state.actions.length - 1;
+        state.action = state.actions[state.index];
       },
-      next: "goalVisible",
+      next: "isTargetVisible",
     },
-    goalVisible: {
-      condition: (mgr, state) => mgr.getVisible(state.action.fl),
-      trueCond: "rootNext1",
+    isTargetVisible: {
+      condition: (manager, state) => manager.isVisible(state.action.fl),
+      trueCond: "isFlagSearching",
       falseCond: "rotate",
     },
     rotate: {
-      exec(mgr, state) {
-        state.command = { n: "turn", v: "90" };
+      exec(manager, state) {
+        state.command = { n: "turn", v: SEARCHING_ANGLE };
       },
       next: "sendCommand",
     },
-    rootNext1: {
-      condition: (mgr, state) => state.action.act == FL,
-
-      trueCond: "flagSeek",
-
-      falseCond: "rootNext2",
+    isFlagSearching: {
+      condition: (manager, state) => state.action.act == FLAG,
+      trueCond: "isFlagClose",
+      falseCond: "isCatchAction",
+    },
+    isFlagClose: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) < FLAG_DISTANCE,
+      trueCond: "nextAction",
+      falseCond: "isFlagAngleHigh",
+    },
+    nextAction: {
+      exec(manager, state) {
+        state.index++;
+        state.action = state.actions[state.index];
+      },
+      next: "isTargetVisible",
+    },
+    isFlagAngleHigh: {
+      condition: (manager, state) =>
+        Math.abs(manager.getAngle(state.action.fl)) > HIGH_FLAG_ANGLE,
+      trueCond: "rotateToTarget",
+      falseCond: "isFlagAngleLow",
+    },
+    isFlagAngleLow: {
+      condition: (manager, state) =>
+        Math.abs(manager.getAngle(state.action.fl)) < LOW_FLAG_ANGLE,
+      trueCond: "rotateToTarget",
+      falseCond: "isFlagDistanceHighAndAngleMid",
+    },
+    isFlagDistanceHighAndAngleMid: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > HIGH_FLAG_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= MID_FLAG_ANGLE,
+      trueCond: "runFullSpeed",
+      falseCond: "isFlagDistanceMidAndAngleMid",
+    },
+    isFlagDistanceMidAndAngleMid: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > MID_FLAG_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= MID_FLAG_ANGLE,
+      trueCond: "runMidSpeed",
+      falseCond: "isFlagDistanceLowAndAngleMid",
+    },
+    isFlagDistanceLowAndAngleMid: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > LOW_FLAG_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= MID_FLAG_ANGLE,
+      trueCond: "runMidSpeed",
+      falseCond: "isFlagDistanceMidAndAngleBelowHigh",
+    },
+    isFlagDistanceMidAndAngleBelowHigh: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) > MID_FLAG_DISTANCE &&
+        Math.abs(manager.getAngle(state.action.fl)) <= HIGH_FLAG_ANGLE,
+      trueCond: "runMidSpeed",
+      falseCond: "rotateToTarget",
+    },
+    rotateToTarget: {
+      exec(manager, state) {
+        state.command = { n: TURN, v: manager.getAngle(state.action.fl) };
+      },
+      next: "sendCommand",
+    },
+    runFullSpeed: {
+      exec(manager, state) {
+        state.command = { n: DASH, v: FULL_SPEED };
+      },
+      next: "sendCommand",
+    },
+    runMidSpeed: {
+      exec(manager, state) {
+        state.command = { n: DASH, v: MID_SPEED };
+      },
+      next: "sendCommand",
+    },
+    runLowSpeed: {
+      exec(manager, state) {
+        state.command = { n: DASH, v: LOW_SPEED };
+      },
+      next: "sendCommand",
+    },
+    sendCommand: {
+      command: (manager, state) => state.command,
     },
 
-    rootNext2: {
-      condition: (mgr, state) => state.action.act == CA,
+    isCatchAction: {
+      condition: (manager, state) => state.action.act == CATCH,
 
-      trueCond: "ballSeek",
+      trueCond: "isBallClose",
 
-      falseCond: "goToBall",
+      falseCond: "isInPenaltyZoneAndInContact",
     },
     flagSeek: {
-      condition: (mgr, state) => 5 > mgr.getDistance(state.action.fl),
+      condition: (manager, state) => 5 > manager.getDistance(state.action.fl),
 
       trueCond: "closeFlag",
 
@@ -414,62 +799,55 @@ const DT = {
     },
 
     closeFlag: {
-      exec(mgr, state) {
+      exec(manager, state) {
         state.increaseNext();
 
-        state.action = state.sequence[state.next];
+        state.action = state.actions[state.index];
       },
 
-      next: "goalVisible",
-    },
-
-    farGoal: {
-      condition: (mgr, state) => mgr.getAngle(state.action.fl) > 4,
-
-      trueCond: "rotateToGoal",
-
-      falseCond: "runToGoal",
+      next: "isTargetVisible",
     },
 
     rotateToGoal: {
-      exec(mgr, state) {
-        state.command = { n: "turn", v: mgr.getAngle(state.action.fl) };
+      exec(manager, state) {
+        state.command = { n: "turn", v: manager.getAngle(state.action.fl) };
       },
 
       next: "sendCommand",
     },
 
     runToGoal: {
-      exec(mgr, state) {
-        state.command = { n: "dash", v: 100 };
+      exec(manager, state) {
+        state.command = { n: "dash", v: FULL_SPEED };
       },
 
       next: "sendCommand",
     },
 
     sendCommand: {
-      command: (mgr, state) => state.command,
+      command: (manager, state) => state.command,
     },
 
-    ballSeek: {
-      condition: (mgr, state) => 16 > mgr.getDistance(state.action.fl),
+    isBallClose: {
+      condition: (manager, state) => 16 > manager.getDistance(state.action.fl),
 
-      trueCond: "ballClose",
+      trueCond: "isInPenaltyZone",
 
       falseCond: "stay",
     },
 
-    ballClose: {
-      condition: (mgr, state) =>
-        2 > mgr.getDistance(state.action.fl) && mgr.inPenaltyZone(),
+    isInPenaltyZone: {
+      condition: (manager, state) =>
+        2 > manager.getDistance(state.action.fl) && manager.isInPenaltyZone(),
 
-      trueCond: "ballTooClose",
+      trueCond: "isBallInContact",
 
       falseCond: "runToGoal",
     },
 
-    ballTooClose: {
-      condition: (mgr, state) => 0.5 > mgr.getDistance(state.action.fl),
+    isBallInContact: {
+      condition: (manager, state) =>
+        BALL_DISTANCE > manager.getDistance(state.action.fl),
 
       trueCond: "ballKick",
 
@@ -477,8 +855,11 @@ const DT = {
     },
 
     catchBall: {
-      exec(mgr, state) {
-        state.command = { n: "catch", v: `${mgr.getAngle(state.action.fl)}` };
+      exec(manager, state) {
+        state.command = {
+          n: CATCH,
+          v: `${manager.getAngle(state.action.fl)}`,
+        };
 
         state.increaseNext();
       },
@@ -486,9 +867,10 @@ const DT = {
       next: "sendCommand",
     },
 
-    goToBall: {
-      condition: (mgr, state) =>
-        0.5 > mgr.getDistance(state.action.fl) && mgr.inPenaltyZone(),
+    isInPenaltyZoneAndInContact: {
+      condition: (manager, state) =>
+        BALL_DISTANCE > manager.getDistance(state.action.fl) &&
+        manager.isInPenaltyZone(),
 
       trueCond: "ballKick",
 
@@ -496,11 +878,11 @@ const DT = {
     },
 
     ballKick: {
-      exec(mgr, state) {
+      exec(manager, state) {
         state.command = {
-          n: "kick",
+          n: KICK,
 
-          v: `100 ${mgr.getKickAngle(state.action.goal)}`,
+          v: `${FULL_POWER} ${manager.getKickAngle(state.action.goal)}`,
         };
 
         state.increaseNext();
@@ -510,7 +892,7 @@ const DT = {
     },
 
     stay: {
-      exec(mgr, state) {
+      exec(manager, state) {
         state.command = null;
       },
 

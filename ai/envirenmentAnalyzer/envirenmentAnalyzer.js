@@ -15,6 +15,8 @@ class EnvirenmentAnalyzer {
 
     this.isBallSeen = false;
     this.ballCoords = { x: NaN, y: NaN, d: NaN, a: NaN };
+
+    this.isLeader;
   }
   getPlayerCoords() {
     let [x, y] = [this.x, this.y];
@@ -33,10 +35,83 @@ class EnvirenmentAnalyzer {
   analyzeVisibleInformation(information) {
     this.opponents = [];
     this.visibleFlags = [];
+    this.isBallSeen = false;
     information = this.__parseTimeFrom(information);
     this.__parseVisible(information);
 
     this.__calculateAgentPosition();
+  }
+
+  isInPenaltyZone(side = "r") {
+    // console.log('inPenaltyZone', this.pos)
+    const x = this.x;
+    const y = this.y;
+    const { fprt, fprb, fplt, fplb } = Flags;
+
+    return (
+      (side === "r" && x > fprt.x && y > fprt.y && y < fprb.y) ||
+      (side === "l" && x < fplt.x && y > fplt.y && y < fplb.y)
+    );
+  }
+
+  getAction(dt) {
+    return this.execute(dt, "root");
+  }
+
+  execute(dt, title) {
+    const manager = this;
+    const action = dt[title];
+    // Exec node
+    if (typeof action.exec == "function") {
+      action.exec(manager, dt.state);
+      console.log(action.next);
+      return this.execute(dt, action.next);
+    }
+    // Condition node
+    if (typeof action.condition == "function") {
+      const cond = action.condition(manager, dt.state);
+
+      if (cond) {
+        console.log(action.trueCond);
+        return this.execute(dt, action.trueCond);
+      }
+      console.log(action.falseCond);
+      return this.execute(dt, action.falseCond);
+    }
+    // Command node
+    if (typeof action.command == "function") {
+      return action.command(manager, dt.state);
+    }
+    throw new Error(`Unexpected node in DT: ${title}`);
+  }
+
+  isVisible(flagName) {
+    if (flagName === "b") {
+      console.log(this.isBallSeen);
+      return this.isBallSeen;
+    }
+
+    let flagIndex = this.visibleFlags.findIndex((elem) => elem[4] === flagName);
+    console.log(flagIndex);
+    return flagIndex != -1 ? true : false;
+  }
+
+  getDistance(flagName) {
+    if (flagName === "b") {
+      return this.ballCoords.d;
+    }
+    let flagIndex = this.visibleFlags.findIndex((elem) => elem[4] === flagName);
+    const distance = this.visibleFlags[flagIndex][2];
+    return distance;
+  }
+
+  getAngle(flagName) {
+    if (flagName === "b") {
+      return this.ballCoords.a;
+    }
+    let flagIndex = this.visibleFlags.findIndex((elem) => elem[4] === flagName);
+    const angle = this.visibleFlags[flagIndex][3];
+    return angle;
   }
 
   __parseTimeFrom(information) {

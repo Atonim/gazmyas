@@ -25,13 +25,14 @@ try {
 } catch {
   x1 = -15;
   y1 = 0;
-  x2 = -10;
+  x2 = 20;
   y2 = 0;
   rotate_speed = 30;
 }
 tL = setTeamLeft();
-//tR = setTeamRight()
+tR = setTeamRight();
 tL[0].socketSend("move", `${x1} ${y1}`);
+tR[0].socketSend("move", `${x2} ${y2}`);
 //tR[0].socketSend("move", `${x2} ${y2}`);
 function setTeamLeft() {
   let team = [];
@@ -41,7 +42,7 @@ function setTeamLeft() {
 }
 function setTeamRight() {
   let team = [];
-  team.push(new Agent(teamNameRight, 1));
+  team.push(new Agent(teamNameRight, 1, "goalkeeper"));
   Socket(team[0], teamNameRight, VERSION);
   return team;
 }
