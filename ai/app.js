@@ -25,7 +25,7 @@ try {
 } catch {
   x1 = -15;
   y1 = 0;
-  x2 = 20;
+  x2 = -50;
   y2 = 0;
   rotate_speed = 30;
 }

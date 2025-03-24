@@ -236,24 +236,26 @@ class Agent {
   }
 
   printInfo() {
-    let report = `(Team ${this.team} player №${
-      this.number
-    }): My position (x: ${round(this.envirenmentAnalizer.x)}, y: ${round(
-      this.envirenmentAnalizer.y
-    )}), side: ${this.envirenmentAnalizer.fieldSide}. I see:`;
+    if ((this.team = "Combine")) {
+      let report = `(Team ${this.team} player №${
+        this.number
+      }): My position (x: ${round(this.envirenmentAnalizer.x)}, y: ${round(
+        this.envirenmentAnalizer.y
+      )}), side: ${this.envirenmentAnalizer.fieldSide}. I see:`;
 
-    if (!!this.envirenmentAnalizer.opponents.length) {
-      for (let playerPos of this.envirenmentAnalizer.opponents) {
-        report += `\n(Team ${this.team} player №${
-          this.number
-        }):\t\tOpponent - position (x: ${round(playerPos.x)}, y: ${round(
-          playerPos.y
-        )})`;
+      if (!!this.envirenmentAnalizer.opponents.length) {
+        for (let playerPos of this.envirenmentAnalizer.opponents) {
+          report += `\n(Team ${this.team} player №${
+            this.number
+          }):\t\tOpponent - position (x: ${round(playerPos.x)}, y: ${round(
+            playerPos.y
+          )})`;
+        }
+      } else {
+        report += ` Nothing`;
       }
-    } else {
-      report += ` Nothing`;
+      return report;
     }
-    return report;
   }
 }
 
