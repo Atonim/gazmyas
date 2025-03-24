@@ -829,7 +829,8 @@ const DT = {
     },
 
     isBallClose: {
-      condition: (manager, state) => 16 > manager.getDistance(state.action.fl),
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) < LOW_BALL_DISTANCE,
 
       trueCond: "isInPenaltyZone",
 
@@ -838,7 +839,8 @@ const DT = {
 
     isInPenaltyZone: {
       condition: (manager, state) =>
-        2 > manager.getDistance(state.action.fl) && manager.isInPenaltyZone(),
+        FLAG_DISTANCE > manager.getDistance(state.action.fl) &&
+        manager.isInPenaltyZone(),
 
       trueCond: "isBallInContact",
 
