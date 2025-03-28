@@ -16,7 +16,7 @@ const FULL_POWER = 100;
 const MID_POWER = 70;
 const LOW_POWER = 40;
 
-const SEARCHING_ANGLE = 30;
+const SEARCHING_ANGLE = 20;
 
 const BALL_DISTANCE = 0.5;
 const FLAG_DISTANCE = 3;
@@ -38,9 +38,33 @@ const player = [{ act: KICK, fl: BALL, goal: GOAL_RIGHT }];
 
 const goalkeeper = [
   { act: FLAG, fl: GOAL_RIGHT },
-  { act: CATCH, fl: BALL, goal: GOAL_LEFT },
+
   { act: KICK, fl: BALL, goal: GOAL_LEFT },
 ];
+
+//{ act: CATCH, fl: BALL, goal: GOAL_LEFT },
+
+//class Player {
+//  constructor(){
+//      this.index = 0;
+//      this.actions = player;
+//      this.command = null;
+//      this.next = this.root
+//    }
+
+//  goNextAction() {
+//    this.index = (this.index + 1) % this.actions.length;
+//  }
+
+//  root(){
+//    this.next = this.isTargetVisible
+//  }
+
+//  isTargetVisible() {
+
+//  }
+
+//}
 
 const DT = {
   player: {
@@ -668,23 +692,74 @@ const DT = {
         state.action = state.actions[state.index];
         state.command = null;
       },
-      next: "checkBall",
+      next: "isGoalkeeperInPenaltyZone",
     },
-    checkBall: {
+    isGoalkeeperInPenaltyZone: {
+      condition: (manager, state) => {
+        return manager.isGoalkeeperInPenaltyZone();
+      },
+      trueCond: "isActionFlag",
+      falseCond: "isGoalVisible",
+    },
+    isGoalVisible: {
+      condition: (manager, state) => manager.isVisible(state.action.fl),
+      trueCond: "isGoalDirected",
+      falseCond: "rotate",
+    },
+    isGoalDirected: {
       condition: (manager, state) =>
-        state.action.act === FLAG &&
-        manager.isInPenaltyZone() &&
-        manager.isBallSeen &&
-        FLAG_DISTANCE > manager.ballCoords.d,
+        Math.abs(manager.getAngle(state.action.fl)) < LOW_FLAG_ANGLE,
+      trueCond: "runFullSpeed",
+      falseCond: "rotateToTarget",
+    },
+    isActionFlag: {
+      condition: (manager, state) => {
+        return state.action.act === FLAG;
+      },
+
       trueCond: "switchToBall",
-      falseCond: "isTargetVisible",
+      falseCond: "isBallVisible",
+    },
+    isBallVisible: {
+      condition: (manager, state) => {
+        console.log("ball", manager.isBallSeen);
+        console.log(state.action.act);
+        return manager.isBallSeen;
+      },
+
+      trueCond: "isBallClose",
+      falseCond: "rotate",
+    },
+    isBallClose: {
+      condition: (manager, state) =>
+        manager.getDistance(state.action.fl) < BALL_DISTANCE,
+      trueCond: "isEnemyGoalVisible",
+      falseCond: "isBallInPenaltyZone",
+    },
+    isEnemyGoalVisible: {
+      condition: (manager, state) => manager.isVisible(state.action.goal),
+      trueCond: "ballKick",
+      falseCond: "rotate",
+    },
+    isBallInPenaltyZone: {
+      condition: (manager, state) => manager.isBallInPenaltyZone(),
+
+      trueCond: "isBallDirected",
+
+      falseCond: "rotateToTarget",
+    },
+    isBallDirected: {
+      condition: (manager, state) =>
+        Math.abs(manager.getAngle(state.action.fl)) < LOW_BALL_ANGLE,
+      trueCond: "runFullSpeed",
+      falseCond: "rotateToTarget",
     },
     switchToBall: {
       exec(manager, state) {
-        state.index = state.actions.length - 1;
+        state.index++;
         state.action = state.actions[state.index];
       },
-      next: "isTargetVisible",
+      next: "isBallVisible",
     },
     isTargetVisible: {
       condition: (manager, state) => manager.isVisible(state.action.fl),
@@ -697,6 +772,7 @@ const DT = {
       },
       next: "sendCommand",
     },
+
     isFlagSearching: {
       condition: (manager, state) => state.action.act == FLAG,
       trueCond: "isFlagClose",
@@ -816,35 +892,8 @@ const DT = {
       next: "sendCommand",
     },
 
-    runToGoal: {
-      exec(manager, state) {
-        state.command = { n: "dash", v: FULL_SPEED };
-      },
-
-      next: "sendCommand",
-    },
-
     sendCommand: {
       command: (manager, state) => state.command,
-    },
-
-    isBallClose: {
-      condition: (manager, state) =>
-        manager.getDistance(state.action.fl) < LOW_BALL_DISTANCE,
-
-      trueCond: "isInPenaltyZone",
-
-      falseCond: "stay",
-    },
-
-    isInPenaltyZone: {
-      condition: (manager, state) =>
-        FLAG_DISTANCE > manager.getDistance(state.action.fl) &&
-        manager.isInPenaltyZone(),
-
-      trueCond: "isBallInContact",
-
-      falseCond: "runToGoal",
     },
 
     isBallInContact: {
@@ -884,7 +933,7 @@ const DT = {
         state.command = {
           n: KICK,
 
-          v: `${FULL_POWER} ${manager.getKickAngle(state.action.goal)}`,
+          v: `${FULL_POWER} ${manager.getAngle(state.action.goal)}`,
         };
 
         state.increaseNext();

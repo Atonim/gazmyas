@@ -25,7 +25,7 @@ try {
 } catch {
   x1 = -15;
   y1 = 0;
-  x2 = -50;
+  x2 = 50;
   y2 = 0;
   rotate_speed = 30;
 }
@@ -43,6 +43,6 @@ function setTeamLeft() {
 function setTeamRight() {
   let team = [];
   team.push(new Agent(teamNameRight, 1, "goalkeeper"));
-  Socket(team[0], teamNameRight, VERSION);
+  Socket(team[0], teamNameRight, VERSION, true);
   return team;
 }

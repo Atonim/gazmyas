@@ -21,13 +21,14 @@ class EnvirenmentAnalyzer {
   getPlayerCoords() {
     let [x, y] = [this.x, this.y];
     if (this.fieldSide === "r") {
-      return [-x, -y];
+      return [x, y];
     }
     return [x, y];
   }
   changeCoordsBySide(coords) {
+    console.log("coords", coords);
     if (this.fieldSide === "r") {
-      return [-coords[0], -coords[1]];
+      return [coords[0], coords[1]];
     }
     return [coords[0], coords[1]];
   }
@@ -42,11 +43,32 @@ class EnvirenmentAnalyzer {
     this.__calculateAgentPosition();
   }
 
-  isInPenaltyZone(side = "r") {
+  isGoalkeeperInPenaltyZone(side = "r") {
     // console.log('inPenaltyZone', this.pos)
     const x = this.x;
     const y = this.y;
     const { fprt, fprb, fplt, fplb } = Flags;
+    console.log(x, y);
+    console.log(fprt.x);
+    console.log(fprt.y);
+    console.log(fprb.y);
+    console.log(side === "r", x > fprt.x, y > fprt.y, y < fprb.y);
+
+    return (
+      (side === "r" && x > fprt.x && y > fprt.y && y < fprb.y) ||
+      (side === "l" && x < fplt.x && y > fplt.y && y < fplb.y)
+    );
+  }
+  isBallInPenaltyZone(side = "r") {
+    // console.log('inPenaltyZone', this.pos)
+    const x = this.ballCoords.x;
+    const y = this.ballCoords.y;
+    const { fprt, fprb, fplt, fplb } = Flags;
+    console.log(x, y);
+    console.log(fprt.x);
+    console.log(fprt.y);
+    console.log(fprb.y);
+    console.log(side === "r", x > fprt.x, y > fprt.y, y < fprb.y);
 
     return (
       (side === "r" && x > fprt.x && y > fprt.y && y < fprb.y) ||

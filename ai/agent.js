@@ -82,6 +82,7 @@ class Agent {
       this.envirenmentAnalizer.fieldSide = "r";
     }
     if (p[1]) this.id = p[1]; // id игрока
+
     this.dt = Object.create(DT[this.role]).init();
   }
   analyzeEnv(msg, cmd, p) {
