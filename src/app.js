@@ -1,42 +1,34 @@
-const Agent = require('./agent');
-const Socket = require('./socket');
+const Agent = require("./agent");
+const Socket = require("./socket");
 const Manager = require("./manager");
-const dt1 = require("./goal_scorer_dt");
-const dt2 = require("./assist_player_dt");
+const goal_scorer_dt = require("./goal_scorer_dt");
+const assist_player_dt = require("./assist_player_dt");
 const VERSION = 7;
 
-
 (async () => {
-	let teamA = "A";
-	let teamB = "B";
-    let player1 = new Agent(teamA);
-    player1.dt = dt2;
-	player1.playerName = "assistant"
-    player1.manager = new Manager();
+  let teamA = "Gazmyas";
+  let teamB = "Combine";
+  let player1 = new Agent(teamA);
+  player1.dt = assist_player_dt;
+  player1.playerName = "assistant";
+  player1.manager = new Manager();
 
-    let player2 = new Agent(teamA);
-    player2.dt = dt1;
-	player2.playerName = "scorer"
-    player2.manager = new Manager();
+  let player2 = new Agent(teamA);
+  player2.dt = goal_scorer_dt;
+  player2.playerName = "scorer";
+  player2.manager = new Manager();
 
-    // let goalKeeper = new Agent(teamB);
-    // goalKeeper.dt = goal_keep_dt;
-    // goalKeeper.manager = new Manager();
-    // goalKeeper.goalie = true;
+  await Socket(player1, teamA, VERSION);
+  await Socket(player2, teamA, VERSION);
 
-    await Socket(player1, teamA, VERSION);
-    await Socket(player2, teamA, VERSION);
-    // await Socket(goalKeeper, teamB, VERSION, true);
+  let npc1 = new Agent("Combine");
+  let npc2 = new Agent("Combine");
+  await Socket(npc1, "Combine", VERSION);
+  await Socket(npc2, "Combine", VERSION);
 
-	let npc1 = new Agent("B");
-    let npc2 = new Agent("B");
-	await Socket(npc1, 'B', VERSION);
-    await Socket(npc2, 'B', VERSION);
+  await player1.socketSend("move", "-20 -10");
+  await player2.socketSend("move", "-20 25");
 
-    await player1.socketSend('move', '-20 0');
-    await player2.socketSend('move', '-20 20');
-    // await goalKeeper.socketSend('move', "-20 0");    
-
-    await npc1.socketSend('move', `-57.5 -38`);
-    await npc2.socketSend('move', `-57.5 38`);  
+  await npc1.socketSend("move", `-51 -9`);
+  await npc2.socketSend("move", `-51 9`);
 })();
