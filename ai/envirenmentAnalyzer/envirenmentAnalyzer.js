@@ -26,7 +26,6 @@ class EnvirenmentAnalyzer {
     return [x, y];
   }
   changeCoordsBySide(coords) {
-    console.log("coords", coords);
     if (this.fieldSide === "r") {
       return [coords[0], coords[1]];
     }
@@ -60,11 +59,11 @@ class EnvirenmentAnalyzer {
     );
   }
   isBallInPenaltyZone(side = "r") {
-    // console.log('inPenaltyZone', this.pos)
+    console.log(this.isBallSeen);
     const x = this.ballCoords.x;
     const y = this.ballCoords.y;
     const { fprt, fprb, fplt, fplb } = Flags;
-    console.log(x, y);
+    console.log("ball coords", x, y);
     console.log(fprt.x);
     console.log(fprt.y);
     console.log(fprb.y);
@@ -185,15 +184,17 @@ class EnvirenmentAnalyzer {
       this.ballCoords.d = visibleObject.p[0];
       this.ballCoords.a = visibleObject.p[1];
       this.isBallSeen = true;
-      const [x, y] = this.changeCoordsBySide(
-        CalcPos.calculateObjectPosition(
-          this.visibleFlags,
-          this.getPlayerCoords(),
-          visibleObject.p
-        )
+      console.log("visflags", this.visibleFlags);
+      console.log("playercoords", this.getPlayerCoords());
+      console.log("visobject", visibleObject.p);
+      const ballPosition = CalcPos.calculateObjectPosition(
+        this.visibleFlags,
+        this.getPlayerCoords(),
+        visibleObject.p
       );
-      this.ballCoords.x = x;
-      this.ballCoords.y = y;
+      console.log("balls coords", ballPosition[0], ballPosition[1]);
+      this.ballCoords.x = ballPosition[0];
+      this.ballCoords.y = ballPosition[1];
     }
   }
 
