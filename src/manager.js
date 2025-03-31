@@ -18,7 +18,6 @@ class Manager {
         return execute(dt, action.falseCond, p);
       }
       if (typeof action.command == "function") {
-        console.log(dt.state.command);
         return action.command(Manager, dt.state);
       }
       throw new Error(`Unexpected node in DT: ${title}`);
@@ -28,7 +27,7 @@ class Manager {
 
   static getVisible(obj_name, p) {
     let obj = utils.see_object(obj_name, p);
-    // console.log("DEBUG", obj);
+
     if (obj) {
       return true;
     }
@@ -47,7 +46,6 @@ class Manager {
 
   static getFaceDir(obj_name, p) {
     let obj = utils.see_object(obj_name, p);
-    console.log("OBJECT: ", obj);
     return obj[4];
   }
 

@@ -133,11 +133,12 @@ class Agent {
   }
 
   analyzeEnv(msg, cmd, p) {
-    //console.log("msg", msg);
+    console.log("player", this.pos_x, this.pos_y);
+    console.log("msg", msg);
     if (cmd === "hear") {
       if (p[2].includes("goal")) {
-        this.act = { n: "move", v: `${this.pos_x} ${this.pos_y}` };
-        this.run = false;
+        //this.act = { n: "move", v: `${this.pos_x} ${this.pos_y}` };
+        //this.run = false;
       }
       if (p[2] === "play_on") {
         this.run = true;

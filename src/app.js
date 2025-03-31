@@ -2,6 +2,7 @@ const Agent = require("./agent");
 const Socket = require("./socket");
 const Manager = require("./manager");
 const dt = require("./player_dt");
+const dt2 = require("./player_dt2");
 const goal_keep_dt = require("./goal_keeper_dt");
 const VERSION = 7;
 
@@ -10,8 +11,8 @@ const VERSION = 7;
   let teamB = "Combine";
   let x1 = -15,
     y1 = -5;
-  let x2 = -14,
-    y2 = 4;
+  let x2 = -20,
+    y2 = -5;
   let x3 = -20,
     y3 = 0;
   let player1 = new Agent(teamA, x1, y1);
@@ -19,7 +20,7 @@ const VERSION = 7;
   player1.manager = new Manager();
 
   let player2 = new Agent(teamA, x2, y2);
-  player2.dt = dt;
+  player2.dt = dt2;
   player2.manager = new Manager();
 
   let goalKeeper = new Agent(teamB, x3, y3);

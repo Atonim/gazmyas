@@ -185,7 +185,7 @@ module.exports = {
         continue;
       }
       let cur_obj_name = obj["cmd"]["p"].join("");
-      console.log("DEBUG", cur_obj_name);
+      //console.log("DEBUG", cur_obj_name);
       if (
         cur_obj_name === obj_name ||
         (obj_name === "p" &&
