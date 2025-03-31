@@ -1,12 +1,12 @@
-const rotationSpeed = 45;
-const goalAngle = 3;
-const flagCloseness = 3;
-const ballCloseness = 0.5;
-const runSpeed = 88;
-const waitTime = 15;
-const slowDownDistance = 3;
-const slowDownCoefficient = 0.8;
-const distance_treshold = 20;
+const rotation_angle = 45;
+const gate_angle = 3;
+const flag_distance = 3;
+const ball_distance = 0.5;
+const run_speed = 88;
+const wait_time = 15;
+const distance_for_slowdown = 3;
+const slow_down = 0.8;
+const distance_limit = 20;
 
 const DT = {
   state: {
@@ -103,7 +103,7 @@ const DT = {
   },
   rotate: {
     exec(mgr, state, p, cmd) {
-      state.command = { n: "turn", v: rotationSpeed };
+      state.command = { n: "turn", v: rotation_angle };
     },
     next: "sendCommand",
   },
@@ -114,19 +114,19 @@ const DT = {
   },
   ballSeek: {
     condition: (mgr, state, p) =>
-      ballCloseness > mgr.getDistance(state.action.fl, p),
+      ball_distance > mgr.getDistance(state.action.fl, p),
     trueCond: "assist",
     falseCond: "checkFar",
   },
   checkFar: {
     condition: (mgr, state, p, cmd) =>
-      slowDownDistance > mgr.getDistance(state.action.fl, p),
+      distance_for_slowdown > mgr.getDistance(state.action.fl, p),
     trueCond: "slowRun",
     falseCond: "farGoal",
   },
   slowRun: {
     condition: (mgr, state, p, cmd) =>
-      Math.abs(mgr.getAngle(state.action.fl, p)) > goalAngle,
+      Math.abs(mgr.getAngle(state.action.fl, p)) > gate_angle,
     trueCond: "rotateToGoal",
     falseCond: "runSlow",
   },
@@ -134,14 +134,14 @@ const DT = {
     exec(mgr, state, p, cmd) {
       state.command = {
         n: "dash",
-        v: Math.floor(runSpeed * slowDownCoefficient),
+        v: Math.floor(run_speed * slow_down),
       };
     },
     next: "sendCommand",
   },
   flagSeek: {
     condition: (mgr, state, p, cmd) =>
-      flagCloseness > mgr.getDistance(state.action.fl, p),
+      flag_distance > mgr.getDistance(state.action.fl, p),
     trueCond: "closeFlag",
     falseCond: "farGoal",
   },
@@ -154,7 +154,7 @@ const DT = {
   },
   farGoal: {
     condition: (mgr, state, p, cmd) =>
-      Math.abs(mgr.getAngle(state.action.fl, p)) > goalAngle,
+      Math.abs(mgr.getAngle(state.action.fl, p)) > gate_angle,
     trueCond: "rotateToGoal",
     falseCond: "runToGoal",
   },
@@ -166,7 +166,7 @@ const DT = {
   },
   runToGoal: {
     exec(mgr, state, p, cmd) {
-      state.command = { n: "dash", v: runSpeed };
+      state.command = { n: "dash", v: run_speed };
     },
     next: "sendCommand",
   },
@@ -176,7 +176,7 @@ const DT = {
     falseCond: "wait",
   },
   wait: {
-    condition: (mgr, state, p, cmd) => state.wait >= waitTime,
+    condition: (mgr, state, p, cmd) => state.wait >= wait_time,
     trueCond: "findPlayer",
     falseCond: "waitIncrement",
   },
@@ -201,7 +201,7 @@ const DT = {
 
       let kick_strength = mgr.getStrength(state.player_distance);
       let angle_change = 20;
-      if (state.player_distance >= distance_treshold) {
+      if (state.player_distance >= distance_limit) {
         angle_change = 15;
       }
       let kick_angle = state.player_angle - angle_change;
