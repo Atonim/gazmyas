@@ -14,7 +14,7 @@ module.exports = {
       }
     }
   },
-  // fix: выбирать флаги так, чтобы alpha получались разными
+
   solveby3(d1, d2, d3, x1, y1, x2, y2, x3, y3) {
     //console.log(d1, d2, d3, x1, y1, x2, y2, x3, y3);
     if (y1 - y2 === y1 - y3) {
@@ -33,7 +33,7 @@ module.exports = {
       (2 * (x3 - x1));
     let delta_beta = beta1 - beta2;
     let delta_alpha = alpha2 - alpha1;
-    //console.log("DElta_alpha: ", delta_alpha);
+
     let X = alpha1 * (delta_beta / delta_alpha) + beta1;
     let Y = delta_beta / delta_alpha;
 

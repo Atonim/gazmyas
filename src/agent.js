@@ -1,11 +1,13 @@
 const Msg = require("./msg");
 const readline = require("readline");
-const utils = require("./calculations");
+const utils = require("./calc");
 
 // имя первого игрока: p"A"1
 
 class Agent {
-  constructor(teamName) {
+  constructor(teamName, x, y) {
+    this.pos_x = x;
+    this.pos_y = y;
     this.position = "l"; // По умолчанию - левая половина поля
     this.run = false; // Игра начата
     this.act = null; // Действия
@@ -14,7 +16,6 @@ class Agent {
     this.y_boundary = 39;
     this.teamName = teamName;
     this.DirectionOfSpeed = null;
-    //this.controller = controller;
     this.turnSpeed = 10; // скорость вращения
     this.flag_distance_epsilon = 1; // значение близости к флагу
     this.flag_direction_epsilon = 10; // значение близости по углу
@@ -134,6 +135,10 @@ class Agent {
   analyzeEnv(msg, cmd, p) {
     //console.log("msg", msg);
     if (cmd === "hear") {
+      if (p[2].includes("goal")) {
+        this.act = { n: "move", v: `${this.pos_x} ${this.pos_y}` };
+        this.run = false;
+      }
       if (p[2] === "play_on") {
         this.run = true;
       }
